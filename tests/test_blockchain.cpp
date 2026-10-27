@@ -168,6 +168,29 @@ void test_genesis() {
   check(genesis.block_hash == make_genesis_block().block_hash, "reproducible genesis");
 }
 
+void test_mining() {
+  const auto genesis = make_genesis_block();
+  const auto transactions = std::vector<Transaction>{make_transaction("a", "b", 5, 1)};
+  Block block{{genesis.block_hash, genesis_timestamp + 1, "0.1", transaction_root(transactions), 0, 3},
+              transactions, ""};
+  const auto original_header = block.header;
+  const auto stats = mine_block(block);
+  check(block.block_hash.starts_with("000"), "real difficulty three");
+  check(block.block_hash == calculate_block_hash(block.header), "recomputed PoW hash");
+  check(stats.attempts == block.header.nonce + 1, "all attempts counted from zero");
+  check(stats.duration_seconds >= 0, "measured duration");
+  auto unchanged = block.header;
+  unchanged.nonce = original_header.nonce;
+  check(serialize_header(unchanged) == serialize_header(original_header), "other mining fields fixed");
+  auto repeated = block;
+  const auto repeated_stats = mine_block(repeated);
+  check(repeated.block_hash == block.block_hash && repeated_stats.attempts == stats.attempts,
+        "repeatable mining");
+  check(!satisfies_difficulty("000", 3), "short fake hash rejected");
+  check(!satisfies_difficulty(std::string(64, 'z'), 0), "non-hex rejected");
+  check(!satisfies_difficulty(block.block_hash, -1), "negative difficulty rejected");
+}
+
 int main() {
   const std::vector<std::pair<std::string, std::function<void()>>> tests = {
       {"custom hash", test_hash},
@@ -179,6 +202,7 @@ int main() {
       {"duplicate transactions", test_duplicate_transactions},
       {"headers and transaction roots", test_headers_and_roots},
       {"genesis block", test_genesis},
+      {"proof of work difficulty three", test_mining},
   };
   int failures = 0;
   for (const auto& [name, test] : tests) {
