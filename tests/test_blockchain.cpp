@@ -1,8 +1,10 @@
 #include "hashing.hpp"
+#include "models.hpp"
 
 #include <functional>
 #include <iostream>
 #include <stdexcept>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -33,9 +35,25 @@ void test_hash() {
   check(dihash::to_hex(digest) == std::string(63, '0') + "1", "leading zeros preserved");
 }
 
+void test_users() {
+  const auto users = generate_users(1000, 20261029);
+  check(users.size() == 1000, "requested user count");
+  check(users == generate_users(1000, 20261029), "repeatable users and balances");
+  check(users != generate_users(1000, 1), "seed affects balances");
+  std::set<std::string> keys;
+  for (const auto& user : users) {
+    check(keys.insert(user.public_key).second, "unique public keys");
+    check(user.public_key.find_first_not_of("0123456789abcdef") == std::string::npos,
+          "simulated hexadecimal keys");
+    check(user.balance >= 100 && user.balance <= 1000000, "initial balance bounds");
+  }
+  check(users.front().name == "User0001", "readable names");
+}
+
 int main() {
   const std::vector<std::pair<std::string, std::function<void()>>> tests = {
       {"custom hash", test_hash},
+      {"users and balances", test_users},
   };
   int failures = 0;
   for (const auto& [name, test] : tests) {
