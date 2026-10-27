@@ -50,10 +50,52 @@ void test_users() {
   check(users.front().name == "User0001", "readable names");
 }
 
+void test_transaction_ids() {
+  const auto transaction = make_transaction("a12f", "b34e", 100, 5);
+  check(serialize_transaction(transaction) == "a12f|b34e|100|5", "canonical serialization");
+  check(transaction.transaction_id == hash_text("a12f|b34e|100|5"), "hash canonical bytes");
+  check(transaction == make_transaction("a12f", "b34e", 100, 5), "identical transaction IDs");
+  for (const auto& changed : {make_transaction("c", "b34e", 100, 5),
+                             make_transaction("a12f", "c", 100, 5),
+                             make_transaction("a12f", "b34e", 101, 5),
+                             make_transaction("a12f", "b34e", 100, 6)}) {
+    check(transaction.transaction_id != changed.transaction_id, "changed data changes ID");
+  }
+  auto changed_id = transaction;
+  changed_id.transaction_id = "ignored";
+  check(serialize_transaction(changed_id) == serialize_transaction(transaction), "ID not serialized");
+  bool rejected = false;
+  try {
+    make_transaction("a|b", "c", 1, 1);
+  } catch (const std::invalid_argument&) {
+    rejected = true;
+  }
+  check(rejected, "delimiter rejected");
+}
+
+void test_transaction_generation() {
+  const auto users = generate_users(20, 42);
+  const auto original = users;
+  const auto transactions = generate_transactions(users, 200, 42);
+  check(transactions == generate_transactions(users, 200, 42), "repeatable transaction data");
+  check(transactions != generate_transactions(users, 200, 43), "transaction seed matters");
+  check(users == original, "generation leaves balances unchanged");
+  std::set<std::uint64_t> sequences;
+  std::set<std::string> identifiers;
+  for (const auto& transaction : transactions) {
+    check(transaction.sender != transaction.receiver, "different parties");
+    check(transaction.amount > 0 && transaction.amount <= 10000, "sensible positive payments");
+    check(sequences.insert(transaction.sequence).second, "unique sequences");
+    check(identifiers.insert(transaction.transaction_id).second, "unique generated IDs");
+  }
+}
+
 int main() {
   const std::vector<std::pair<std::string, std::function<void()>>> tests = {
       {"custom hash", test_hash},
       {"users and balances", test_users},
+      {"transaction IDs", test_transaction_ids},
+      {"transaction generation", test_transaction_generation},
   };
   int failures = 0;
   for (const auto& [name, test] : tests) {
