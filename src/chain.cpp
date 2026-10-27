@@ -35,6 +35,17 @@ MiningStats mine_block(Block& block) {
   throw std::runtime_error("nonce search exhausted");
 }
 
+Amount total_balance(const Balances& balances) {
+  Amount total = 0;
+  for (const auto& [key, balance] : balances) {
+    if (balance < 0 || balance > std::numeric_limits<Amount>::max() - total) {
+      throw std::logic_error("negative balance or total balance overflow");
+    }
+    total += balance;
+  }
+  return total;
+}
+
 std::string execute_transaction(const Transaction& transaction, Balances& balances,
                                 std::set<std::string>& accepted_ids,
                                 std::set<std::uint64_t>& accepted_sequences) {
@@ -119,7 +130,7 @@ std::string validate_block_state(const Block& block, const Block& previous, int 
 }  // namespace
 
 Chain::Chain(const std::vector<User>& users, std::vector<Transaction> pending, int difficulty)
-    : pending_(std::move(pending)), difficulty_(difficulty) {
+    : pending_(std::move(pending)), difficulty_(difficulty), submitted_count_(pending_.size()) {
   if (difficulty < 0 || difficulty > static_cast<int>(hash_length)) {
     throw std::invalid_argument("difficulty must be between 0 and 64");
   }
@@ -141,6 +152,9 @@ Chain::Chain(const std::vector<User>& users, std::vector<Transaction> pending, i
 }
 
 Candidate Chain::build_candidate(std::mt19937_64& random) const {
+  if (blocks_.back().header.timestamp == std::numeric_limits<std::int64_t>::max()) {
+    throw std::overflow_error("block timestamp exhausted");
+  }
   auto balances = balances_;
   auto ids = accepted_ids_;
   auto sequences = accepted_sequences_;
@@ -160,7 +174,7 @@ Candidate Chain::build_candidate(std::mt19937_64& random) const {
     }
   }
   candidate.block.header = {blocks_.back().block_hash,
-                            genesis_timestamp + static_cast<std::int64_t>(blocks_.size()),
+                            blocks_.back().header.timestamp + 1,
                             "0.1", transaction_root(candidate.block.transactions), 0, difficulty_};
   return candidate;
 }
@@ -218,6 +232,38 @@ StepResult Chain::process_next(std::mt19937_64& random) {
     ++result.removed;
   }
   return result;
+}
+
+void Chain::check_invariants() const {
+  const auto genesis = make_genesis_block();
+  if (blocks_.empty() || serialize_header(blocks_.front().header) != serialize_header(genesis.header) ||
+      blocks_.front().block_hash != genesis.block_hash || !blocks_.front().transactions.empty()) {
+    throw std::logic_error("invalid genesis block");
+  }
+  auto replayed_balances = initial_balances_;
+  std::set<std::string> ids;
+  std::set<std::uint64_t> sequences;
+  for (std::size_t index = 1; index < blocks_.size(); ++index) {
+    const auto reason = validate_block_state(blocks_[index], blocks_[index - 1], difficulty_,
+                                             replayed_balances, ids, sequences);
+    if (!reason.empty()) {
+      throw std::logic_error("chain replay failed: " + reason);
+    }
+  }
+  if (replayed_balances != balances_ || ids != accepted_ids_ || sequences != accepted_sequences_) {
+    throw std::logic_error("confirmed state differs from chain replay");
+  }
+  if (total_balance(initial_balances_) != total_balance(balances_)) {
+    throw std::logic_error("total funds changed");
+  }
+  if (accepted_ids_.size() + rejected_.size() + pending_.size() != submitted_count_) {
+    throw std::logic_error("transaction accounting mismatch");
+  }
+  for (const auto& rejected : rejected_) {
+    if (rejected.reason.empty()) {
+      throw std::logic_error("rejected transaction has no reason");
+    }
+  }
 }
 
 }  // namespace blockchain

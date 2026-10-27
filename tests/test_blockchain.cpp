@@ -4,6 +4,7 @@
 
 #include <functional>
 #include <iostream>
+#include <limits>
 #include <stdexcept>
 #include <set>
 #include <string>
@@ -149,6 +150,9 @@ void test_headers_and_roots() {
   check(serialize_header(header) == "abc|1700000001|0.1|def|42|3", "canonical header");
   check(calculate_block_hash(header) == hash_text("abc|1700000001|0.1|def|42|3"),
         "fixed header hashing");
+  check(calculate_block_hash(header) ==
+            "a3843bd939695e2754504278ceb9b7cbe5b944da3854550a79dc2eea3cdf03db",
+        "header matches Assignment 1 Python reference");
   check(calculate_block_hash(header) == calculate_block_hash(header), "repeatable header hash");
   const auto first = make_transaction("a", "b", 1, 1);
   const auto second = make_transaction("b", "a", 2, 2);
@@ -239,6 +243,7 @@ void test_pool_processing() {
   while (!chain.pending().empty()) {
     const auto result = chain.process_next(random);
     check(result.error.empty() && result.removed > 0, "pool makes progress");
+    chain.check_invariants();
   }
   check(chain.blocks().size() == 4 && chain.accepted_transactions() == 205, "all entries accepted");
   check(chain.blocks().back().transactions.size() == 5, "partial final block");
@@ -259,6 +264,179 @@ void test_pool_processing() {
   check(initial == final, "funds conserved");
 }
 
+Block make_test_block(const Chain& chain, const std::vector<Transaction>& transactions,
+                      int difficulty = 0) {
+  Block block{{chain.blocks().back().block_hash, chain.blocks().back().header.timestamp + 1,
+               "0.1", transaction_root(transactions), 0, difficulty}, transactions, ""};
+  mine_block(block);
+  return block;
+}
+
+void check_rejected_block(Chain& chain, const Block& block, const std::string& reason) {
+  const auto balances = chain.balances();
+  const auto pending = chain.pending();
+  const auto height = chain.blocks().size();
+  const auto accepted = chain.accepted_transactions();
+  const auto rejected = chain.rejected().size();
+  check(chain.validate_block(block).find(reason) != std::string::npos, "validation: " + reason);
+  check(chain.accept_block(block).find(reason) != std::string::npos, "acceptance: " + reason);
+  check(chain.balances() == balances && chain.pending() == pending && chain.blocks().size() == height &&
+            chain.accepted_transactions() == accepted && chain.rejected().size() == rejected,
+        "rejected block preserves all confirmed state and pool");
+  chain.check_invariants();
+}
+
+void test_invalid_block_headers() {
+  const std::vector<User> users{{"A", "a", 100}, {"B", "b", 0}};
+  const std::vector<Transaction> transactions{make_transaction("a", "b", 10, 1)};
+  Chain chain(users, transactions, 0);
+  const auto valid = make_test_block(chain, transactions);
+  auto changed = valid;
+  changed.header.prev_hash[0] = 'x';
+  check_rejected_block(chain, changed, "incorrect previous hash");
+  changed = valid;
+  changed.header.tx_root[0] = 'x';
+  check_rejected_block(chain, changed, "incorrect transaction root");
+  changed = valid;
+  changed.block_hash[0] = 'x';
+  check_rejected_block(chain, changed, "incorrect block hash");
+  changed = valid;
+  changed.header.version = "0.2";
+  check_rejected_block(chain, changed, "unsupported block version");
+  changed = valid;
+  changed.header.timestamp = genesis_timestamp;
+  check_rejected_block(chain, changed, "timestamp must increase");
+  check_rejected_block(chain, make_test_block(chain, {}), "block must contain 1 to 100");
+  check_rejected_block(chain, make_test_block(chain, std::vector<Transaction>(101, transactions[0])),
+                       "block must contain 1 to 100");
+  check(chain.accept_block(valid).empty(), "valid block remains usable after failures");
+  chain.check_invariants();
+}
+
+void test_invalid_block_transactions() {
+  const std::vector<User> users{{"A", "a", 100}, {"B", "b", 0}, {"C", "c", 0}};
+  const auto first = make_transaction("a", "b", 10, 1);
+  const auto second = make_transaction("a", "c", 10, 2);
+  Chain chain(users, {first, second}, 0);
+  check_rejected_block(chain, make_test_block(chain, {first, first}), "duplicate transaction");
+  check_rejected_block(chain, make_test_block(chain, {first, make_transaction("a", "c", 10, 1)}),
+                       "duplicate sequence");
+  for (const auto amount : {Amount{0}, Amount{-1}, Amount{101}}) {
+    check_rejected_block(chain, make_test_block(chain, {make_transaction("a", "b", amount, 1)}),
+                         amount <= 0 ? "positive integer" : "insufficient funds");
+  }
+  check_rejected_block(chain, make_test_block(chain, {make_transaction("missing", "b", 1, 1)}),
+                       "unknown sender");
+  check_rejected_block(chain, make_test_block(chain, {make_transaction("a", "missing", 1, 1)}),
+                       "unknown receiver");
+  auto tampered = first;
+  tampered.amount = 11;
+  check_rejected_block(chain, make_test_block(chain, {tampered}), "incorrect transaction ID");
+  const auto not_pending = make_test_block(chain, {make_transaction("a", "b", 1, 3)});
+  const auto before = chain.balances();
+  check(chain.validate_block(not_pending).empty(), "transfer is structurally valid");
+  check(chain.accept_block(not_pending) == "transaction is not in the pending pool", "local pool required");
+  check(chain.balances() == before && chain.pending().size() == 2, "missing pool entry has no effect");
+  check(chain.accept_block(make_test_block(chain, {first})).empty(), "first accepted block");
+  check_rejected_block(chain, make_test_block(chain, {first}), "duplicate transaction");
+  chain.check_invariants();
+}
+
+void test_block_difficulty_validation() {
+  const std::vector<User> users{{"A", "a", 100}, {"B", "b", 0}};
+  const std::vector<Transaction> transactions{make_transaction("a", "b", 10, 1)};
+  Chain chain(users, transactions, 3);
+  check_rejected_block(chain, make_test_block(chain, transactions, 0), "incorrect difficulty");
+  auto invalid = make_test_block(chain, transactions, 3);
+  do {
+    ++invalid.header.nonce;
+    invalid.block_hash = calculate_block_hash(invalid.header);
+  } while (satisfies_difficulty(invalid.block_hash, 3));
+  check_rejected_block(chain, invalid, "proof of work does not meet difficulty");
+  check(chain.accept_block(make_test_block(chain, transactions, 3)).empty(), "difficulty three accepted");
+  chain.check_invariants();
+}
+
+void test_rejected_pool_accounting() {
+  const std::vector<User> users{{"A", "a", 100}, {"B", "b", 0}};
+  const auto valid = make_transaction("a", "b", 10, 1);
+  auto tampered = make_transaction("a", "b", 5, 2);
+  tampered.transaction_id = "invalid";
+  Chain chain(users, {valid, valid, tampered, make_transaction("a", "b", 1000, 3)}, 0);
+  std::mt19937_64 random(42);
+  const auto result = chain.process_next(random);
+  check(result.block_accepted && result.removed == 4, "mixed pool processed");
+  check(chain.accepted_transactions() == 1 && chain.rejected().size() == 3 && chain.pending().empty(),
+        "each submitted occurrence accounted for");
+  check(chain.balances().at("a") == 90 && chain.balances().at("b") == 10, "rejections have no effect");
+  std::set<std::string> reasons;
+  for (const auto& rejected : chain.rejected()) {
+    reasons.insert(rejected.reason);
+  }
+  check(reasons == std::set<std::string>{"duplicate transaction", "incorrect transaction ID",
+                                        "insufficient funds"}, "meaningful rejection reasons");
+  chain.check_invariants();
+}
+
+void test_no_executable_transactions() {
+  const std::vector<User> users{{"A", "a", 0}, {"B", "b", 0}};
+  Chain chain(users, {make_transaction("a", "b", 1, 1), make_transaction("b", "a", 1, 2)}, 3);
+  std::mt19937_64 random(42);
+  const auto result = chain.process_next(random);
+  check(!result.block_accepted && result.removed == 2 && result.mining.attempts == 0,
+        "unexecutable pool rejected without mining");
+  check(chain.pending().empty() && chain.rejected().size() == 2 && chain.blocks().size() == 1,
+        "no infinite loop or empty block");
+  chain.check_invariants();
+  Chain empty(users, {}, 3);
+  check(empty.process_next(random).removed == 0, "empty dataset is a no-op");
+  empty.check_invariants();
+}
+
+void test_reproducible_chain() {
+  const auto users = generate_users(10, 123);
+  const auto transactions = generate_transactions(users, 130, 123);
+  Chain first(users, transactions, 0);
+  Chain second(users, transactions, 0);
+  std::mt19937_64 first_random(123);
+  std::mt19937_64 second_random(123);
+  while (!first.pending().empty()) {
+    first.process_next(first_random);
+    second.process_next(second_random);
+    first.check_invariants();
+    second.check_invariants();
+  }
+  check(first.balances() == second.balances(), "repeatable final balances");
+  check(first.blocks().size() == second.blocks().size(), "repeatable block count");
+  for (std::size_t index = 0; index < first.blocks().size(); ++index) {
+    check(first.blocks()[index].block_hash == second.blocks()[index].block_hash &&
+              first.blocks()[index].transactions == second.blocks()[index].transactions,
+          "repeatable block hashes and ordered data");
+  }
+}
+
+void test_invalid_initial_state() {
+  const std::vector<std::vector<User>> invalid = {
+      {{"A", "a", -1}}, {{"A", "a", 10}, {"B", "a", 10}}, {{"A", "a|b", 10}},
+      {{"A", "", 10}}, {{"A", "a", std::numeric_limits<Amount>::max()}, {"B", "b", 1}},
+  };
+  for (const auto& users : invalid) {
+    bool rejected = false;
+    try {
+      Chain chain(users, {}, 0);
+    } catch (const std::invalid_argument&) {
+      rejected = true;
+    }
+    check(rejected, "invalid initial state rejected");
+  }
+  Balances balances{{"a", 1}, {"b", std::numeric_limits<Amount>::max()}};
+  std::set<std::string> ids;
+  std::set<std::uint64_t> sequences;
+  check(execute_transaction(make_transaction("a", "b", 1, 1), balances, ids, sequences) ==
+            "receiver balance overflow", "integer overflow guarded");
+  check(balances.at("a") == 1 && ids.empty(), "overflow changes no state");
+}
+
 int main() {
   const std::vector<std::pair<std::string, std::function<void()>>> tests = {
       {"custom hash", test_hash},
@@ -274,6 +452,13 @@ int main() {
       {"candidate selection and acceptance", test_candidate_and_acceptance},
       {"failed block atomicity", test_failed_block_is_atomic},
       {"pool processing and balances", test_pool_processing},
+      {"invalid block headers", test_invalid_block_headers},
+      {"invalid block transactions", test_invalid_block_transactions},
+      {"block difficulty enforcement", test_block_difficulty_validation},
+      {"rejected pool accounting", test_rejected_pool_accounting},
+      {"no executable transactions", test_no_executable_transactions},
+      {"reproducible chain", test_reproducible_chain},
+      {"invalid initial state", test_invalid_initial_state},
   };
   int failures = 0;
   for (const auto& [name, test] : tests) {

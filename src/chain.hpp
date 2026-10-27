@@ -17,6 +17,7 @@ struct MiningStats {
 
 bool satisfies_difficulty(const std::string& hash, int difficulty);
 MiningStats mine_block(Block& block);
+Amount total_balance(const Balances& balances);
 
 // The caller supplies temporary state until a whole block has passed validation.
 std::string execute_transaction(const Transaction& transaction, Balances& balances,
@@ -48,6 +49,7 @@ class Chain {
   std::string validate_block(const Block& block) const;
   std::string accept_block(const Block& block);
   StepResult process_next(std::mt19937_64& random);
+  void check_invariants() const;
 
   const Balances& initial_balances() const { return initial_balances_; }
   const Balances& balances() const { return balances_; }
@@ -65,6 +67,7 @@ class Chain {
   std::set<std::string> accepted_ids_;
   std::set<std::uint64_t> accepted_sequences_;
   int difficulty_;
+  std::size_t submitted_count_;
 };
 
 }  // namespace blockchain

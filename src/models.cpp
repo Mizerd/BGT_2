@@ -54,6 +54,7 @@ std::vector<Transaction> generate_transactions(const std::vector<User>& users,
   for (std::size_t index = 0; index < count; ++index) {
     const auto sender = sender_index(random);
     auto receiver = receiver_index(random);
+    // Skip the sender while keeping every other receiver equally likely.
     if (receiver >= sender) {
       ++receiver;
     }
