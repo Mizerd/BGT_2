@@ -191,6 +191,74 @@ void test_mining() {
   check(!satisfies_difficulty(block.block_hash, -1), "negative difficulty rejected");
 }
 
+void test_candidate_and_acceptance() {
+  const std::vector<User> users{{"A", "a", 100}, {"B", "b", 0}, {"C", "c", 0}};
+  const std::vector<Transaction> transactions{make_transaction("a", "b", 70, 1),
+                                               make_transaction("a", "c", 60, 2)};
+  Chain chain(users, transactions, 0);
+  std::mt19937_64 random(42);
+  const auto before = chain.balances();
+  auto candidate = chain.build_candidate(random);
+  check(candidate.block.transactions.size() == 1, "candidate prevents combined overspending");
+  check(candidate.rejected.size() == 1, "overspending entry explained");
+  check(chain.balances() == before && chain.pending() == transactions && chain.blocks().size() == 1,
+        "candidate building changes no confirmed state");
+  mine_block(candidate.block);
+  check(chain.validate_block(candidate.block).empty(), "complete block validates");
+  check(chain.balances() == before, "validation changes no confirmed state");
+  check(chain.accept_block(candidate.block).empty(), "block appended");
+  check(chain.blocks().size() == 2 && chain.accepted_transactions() == 1, "accepted counts");
+  check(chain.pending().size() == 1, "only accepted entry removed");
+  check(chain.initial_balances() == before && chain.balances() != before, "original balances saved");
+}
+
+void test_failed_block_is_atomic() {
+  const std::vector<User> users{{"A", "a", 100}, {"B", "b", 0}, {"C", "c", 0}};
+  const std::vector<Transaction> transactions{make_transaction("a", "b", 70, 1),
+                                               make_transaction("a", "c", 60, 2)};
+  Chain chain(users, transactions, 0);
+  Block block{{chain.blocks().back().block_hash, genesis_timestamp + 1, "0.1",
+               transaction_root(transactions), 0, 0}, transactions, ""};
+  mine_block(block);
+  const auto before = chain.balances();
+  check(chain.accept_block(block).find("insufficient funds") != std::string::npos,
+        "block fails after first transfer was checked");
+  check(chain.balances() == before && chain.blocks().size() == 1, "failure rolls back all transfers");
+  check(chain.pending() == transactions && chain.accepted_transactions() == 0 && chain.rejected().empty(),
+        "failed block preserves pool and accounting");
+}
+
+void test_pool_processing() {
+  auto users = generate_users(5, 42);
+  for (auto& user : users) {
+    user.balance = 1000000;
+  }
+  const auto transactions = generate_transactions(users, 205, 42);
+  Chain chain(users, transactions, 0);
+  std::mt19937_64 random(42);
+  while (!chain.pending().empty()) {
+    const auto result = chain.process_next(random);
+    check(result.error.empty() && result.removed > 0, "pool makes progress");
+  }
+  check(chain.blocks().size() == 4 && chain.accepted_transactions() == 205, "all entries accepted");
+  check(chain.blocks().back().transactions.size() == 5, "partial final block");
+  check(chain.rejected().empty(), "no spurious rejections");
+  std::set<std::string> ids;
+  for (const auto& block : chain.blocks()) {
+    for (const auto& transaction : block.transactions) {
+      check(ids.insert(transaction.transaction_id).second, "accepted only once");
+    }
+  }
+  Amount initial = 0;
+  Amount final = 0;
+  for (const auto& [key, balance] : chain.balances()) {
+    check(balance >= 0, "nonnegative final balances");
+    initial += chain.initial_balances().at(key);
+    final += balance;
+  }
+  check(initial == final, "funds conserved");
+}
+
 int main() {
   const std::vector<std::pair<std::string, std::function<void()>>> tests = {
       {"custom hash", test_hash},
@@ -203,6 +271,9 @@ int main() {
       {"headers and transaction roots", test_headers_and_roots},
       {"genesis block", test_genesis},
       {"proof of work difficulty three", test_mining},
+      {"candidate selection and acceptance", test_candidate_and_acceptance},
+      {"failed block atomicity", test_failed_block_is_atomic},
+      {"pool processing and balances", test_pool_processing},
   };
   int failures = 0;
   for (const auto& [name, test] : tests) {
