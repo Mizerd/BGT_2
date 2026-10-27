@@ -1,5 +1,6 @@
 #include "hashing.hpp"
 #include "models.hpp"
+#include "chain.hpp"
 
 #include <functional>
 #include <iostream>
@@ -90,12 +91,68 @@ void test_transaction_generation() {
   }
 }
 
+void test_transfers() {
+  Balances balances{{"a", 100}, {"b", 0}, {"c", 0}};
+  std::set<std::string> ids;
+  std::set<std::uint64_t> sequences;
+  check(execute_transaction(make_transaction("a", "b", 70, 1), balances, ids, sequences).empty(),
+        "valid transfer accepted");
+  check(balances.at("a") == 30 && balances.at("b") == 70, "transfer balances");
+  const auto after_first = balances;
+  check(execute_transaction(make_transaction("a", "c", 60, 2), balances, ids, sequences) ==
+            "insufficient funds", "sequential overspending rejected");
+  check(balances == after_first && ids.size() == 1 && sequences.size() == 1,
+        "failed transfer changes no state");
+  check(execute_transaction(make_transaction("b", "c", 70, 3), balances, ids, sequences).empty(),
+        "received funds can be spent");
+  check(balances.at("b") == 0 && balances.at("c") == 70, "exact balance transfer");
+}
+
+void test_invalid_transactions() {
+  const Balances initial{{"a", 100}, {"b", 10}, {"c", 0}};
+  auto wrong_id = make_transaction("a", "b", 10, 1);
+  wrong_id.amount = 11;
+  const std::vector<std::pair<Transaction, std::string>> invalid = {
+      {make_transaction("a", "b", 101, 1), "insufficient funds"},
+      {make_transaction("a", "b", 0, 1), "amount must be a positive integer"},
+      {make_transaction("a", "b", -1, 1), "amount must be a positive integer"},
+      {make_transaction("missing", "b", 1, 1), "unknown sender"},
+      {make_transaction("a", "missing", 1, 1), "unknown receiver"},
+      {make_transaction("a", "a", 1, 1), "sender equals receiver"},
+      {wrong_id, "incorrect transaction ID"},
+  };
+  for (const auto& [transaction, reason] : invalid) {
+    auto balances = initial;
+    std::set<std::string> ids;
+    std::set<std::uint64_t> sequences;
+    check(execute_transaction(transaction, balances, ids, sequences) == reason, reason);
+    check(balances == initial && ids.empty() && sequences.empty(), "rejection has no effect");
+  }
+}
+
+void test_duplicate_transactions() {
+  Balances balances{{"a", 100}, {"b", 10}};
+  std::set<std::string> ids;
+  std::set<std::uint64_t> sequences;
+  const auto transaction = make_transaction("a", "b", 10, 1);
+  check(execute_transaction(transaction, balances, ids, sequences).empty(), "first execution");
+  const auto confirmed = balances;
+  check(execute_transaction(transaction, balances, ids, sequences) == "duplicate transaction",
+        "cannot execute twice");
+  check(execute_transaction(make_transaction("b", "a", 1, 1), balances, ids, sequences) ==
+            "duplicate sequence", "sequence cannot be reused");
+  check(balances == confirmed && ids.size() == 1, "duplicates have no effect");
+}
+
 int main() {
   const std::vector<std::pair<std::string, std::function<void()>>> tests = {
       {"custom hash", test_hash},
       {"users and balances", test_users},
       {"transaction IDs", test_transaction_ids},
       {"transaction generation", test_transaction_generation},
+      {"valid sequential transfers", test_transfers},
+      {"invalid transactions", test_invalid_transactions},
+      {"duplicate transactions", test_duplicate_transactions},
   };
   int failures = 0;
   for (const auto& [name, test] : tests) {
