@@ -2,4 +2,7 @@
 set -euo pipefail
 
 mkdir -p build
-"${CXX:-c++}" -std=c++20 -O2 -Wall -Wextra -Wpedantic src/main.cpp -o build/blockchain
+flags=(-std=c++20 -O2 -Wall -Wextra -Wpedantic -Isrc)
+sources=(src/custom_hash.cpp)
+"${CXX:-c++}" "${flags[@]}" "${sources[@]}" src/main.cpp -o build/blockchain
+"${CXX:-c++}" "${flags[@]}" "${sources[@]}" tests/test_blockchain.cpp -o build/tests
