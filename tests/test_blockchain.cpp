@@ -144,6 +144,30 @@ void test_duplicate_transactions() {
   check(balances == confirmed && ids.size() == 1, "duplicates have no effect");
 }
 
+void test_headers_and_roots() {
+  const BlockHeader header{"abc", 1700000001, "0.1", "def", 42, 3};
+  check(serialize_header(header) == "abc|1700000001|0.1|def|42|3", "canonical header");
+  check(calculate_block_hash(header) == hash_text("abc|1700000001|0.1|def|42|3"),
+        "fixed header hashing");
+  check(calculate_block_hash(header) == calculate_block_hash(header), "repeatable header hash");
+  const auto first = make_transaction("a", "b", 1, 1);
+  const auto second = make_transaction("b", "a", 2, 2);
+  check(transaction_root({first, second}) == hash_text(first.transaction_id + second.transaction_id),
+        "v0.1 concatenates transaction IDs");
+  check(transaction_root({first, second}) != transaction_root({second, first}), "root order matters");
+  check(transaction_root({}) == hash_text(""), "empty transaction root");
+}
+
+void test_genesis() {
+  const auto genesis = make_genesis_block();
+  check(genesis.transactions.empty(), "genesis has no transactions");
+  check(genesis.header.prev_hash == std::string(hash_length, '0'), "genesis predecessor");
+  check(genesis.header.timestamp == genesis_timestamp, "fixed genesis timestamp");
+  check(genesis.header.tx_root == hash_text(""), "genesis root");
+  check(genesis.header.nonce == 0 && genesis.header.difficulty == 0, "genesis PoW exemption");
+  check(genesis.block_hash == make_genesis_block().block_hash, "reproducible genesis");
+}
+
 int main() {
   const std::vector<std::pair<std::string, std::function<void()>>> tests = {
       {"custom hash", test_hash},
@@ -153,6 +177,8 @@ int main() {
       {"valid sequential transfers", test_transfers},
       {"invalid transactions", test_invalid_transactions},
       {"duplicate transactions", test_duplicate_transactions},
+      {"headers and transaction roots", test_headers_and_roots},
+      {"genesis block", test_genesis},
   };
   int failures = 0;
   for (const auto& [name, test] : tests) {

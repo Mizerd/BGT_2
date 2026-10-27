@@ -63,4 +63,28 @@ std::vector<Transaction> generate_transactions(const std::vector<User>& users,
   return transactions;
 }
 
+std::string transaction_root(const std::vector<Transaction>& transactions) {
+  std::string identifiers;
+  for (const auto& transaction : transactions) {
+    identifiers += transaction.transaction_id;
+  }
+  return hash_text(identifiers);
+}
+
+std::string serialize_header(const BlockHeader& header) {
+  return header.prev_hash + "|" + std::to_string(header.timestamp) + "|" + header.version +
+         "|" + header.tx_root + "|" + std::to_string(header.nonce) + "|" +
+         std::to_string(header.difficulty);
+}
+
+std::string calculate_block_hash(const BlockHeader& header) {
+  return hash_text(serialize_header(header));
+}
+
+Block make_genesis_block() {
+  Block block{{std::string(hash_length, '0'), genesis_timestamp, "0.1", hash_text(""), 0, 0}, {}, ""};
+  block.block_hash = calculate_block_hash(block.header);
+  return block;
+}
+
 }  // namespace blockchain
