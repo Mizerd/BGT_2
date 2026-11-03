@@ -11,8 +11,7 @@ namespace blockchain {
 
 bool satisfies_difficulty(const std::string& hash, int difficulty) {
   return difficulty >= 0 && difficulty <= static_cast<int>(hash_length) &&
-         hash.size() == hash_length &&
-         hash.find_first_not_of("0123456789abcdef") == std::string::npos &&
+         is_hash(hash) &&
          hash.starts_with(std::string(static_cast<std::size_t>(difficulty), '0'));
 }
 
@@ -46,9 +45,9 @@ Amount total_balance(const Balances& balances) {
   return total;
 }
 
-std::string execute_transaction(const Transaction& transaction, Balances& balances,
-                                std::set<std::string>& accepted_ids,
-                                std::set<std::uint64_t>& accepted_sequences) {
+std::string validate_transaction(const Transaction& transaction, const Balances& balances,
+                                 const std::set<std::string>& accepted_ids,
+                                 const std::set<std::uint64_t>& accepted_sequences) {
   const auto sender = balances.find(transaction.sender);
   const auto receiver = balances.find(transaction.receiver);
   if (sender == balances.end()) {
@@ -67,6 +66,9 @@ std::string execute_transaction(const Transaction& transaction, Balances& balanc
   if (transaction.amount <= 0) {
     return "amount must be a positive integer";
   }
+  if (!is_hash(transaction.transaction_id)) {
+    return "invalid transaction ID format";
+  }
   if (transaction.transaction_id != hash_text(serialize_transaction(transaction))) {
     return "incorrect transaction ID";
   }
@@ -75,6 +77,21 @@ std::string execute_transaction(const Transaction& transaction, Balances& balanc
   }
   if (accepted_sequences.contains(transaction.sequence)) {
     return "duplicate sequence";
+  }
+  return "";
+}
+
+std::string execute_transaction(const Transaction& transaction, Balances& balances,
+                                std::set<std::string>& accepted_ids,
+                                std::set<std::uint64_t>& accepted_sequences) {
+  const auto reason = validate_transaction(transaction, balances, accepted_ids, accepted_sequences);
+  if (!reason.empty()) {
+    return reason;
+  }
+  const auto sender = balances.find(transaction.sender);
+  const auto receiver = balances.find(transaction.receiver);
+  if (sender->second < 0 || receiver->second < 0) {
+    return "negative account balance";
   }
   if (sender->second < transaction.amount) {
     return "insufficient funds";
@@ -135,7 +152,7 @@ std::string validate_block_state(const Block& block, const Block& previous, int 
 }  // namespace
 
 Chain::Chain(const std::vector<User>& users, std::vector<Transaction> pending, int difficulty)
-    : pending_(std::move(pending)), difficulty_(difficulty), submitted_count_(pending_.size()) {
+    : difficulty_(difficulty), submitted_count_(0) {
   if (difficulty < 0 || difficulty > static_cast<int>(hash_length)) {
     throw std::invalid_argument("difficulty must be between 0 and 64");
   }
@@ -154,6 +171,32 @@ Chain::Chain(const std::vector<User>& users, std::vector<Transaction> pending, i
   }
   balances_ = initial_balances_;
   blocks_.push_back(make_genesis_block());
+  for (const auto& transaction : pending) {
+    add_transaction(transaction);
+  }
+}
+
+std::string Chain::add_transaction(const Transaction& transaction) {
+  ++submitted_count_;
+  auto reason = validate_transaction(transaction, balances_, accepted_ids_, accepted_sequences_);
+  if (reason.empty()) {
+    for (const auto& pending : pending_) {
+      if (pending.transaction_id == transaction.transaction_id) {
+        reason = "duplicate transaction";
+        break;
+      }
+      if (pending.sequence == transaction.sequence) {
+        reason = "duplicate sequence";
+        break;
+      }
+    }
+  }
+  if (reason.empty()) {
+    pending_.push_back(transaction);
+  } else {
+    rejected_.push_back({transaction, reason});
+  }
+  return reason;
 }
 
 Candidate Chain::build_candidate(std::mt19937_64& random) const {
@@ -263,6 +306,16 @@ void Chain::check_invariants() const {
   }
   if (accepted_ids_.size() + rejected_.size() + pending_.size() != submitted_count_) {
     throw std::logic_error("transaction accounting mismatch");
+  }
+  auto pending_ids = accepted_ids_;
+  auto pending_sequences = accepted_sequences_;
+  for (const auto& transaction : pending_) {
+    const auto reason = validate_transaction(transaction, balances_, pending_ids, pending_sequences);
+    if (!reason.empty()) {
+      throw std::logic_error("invalid pool entry: " + reason);
+    }
+    pending_ids.insert(transaction.transaction_id);
+    pending_sequences.insert(transaction.sequence);
   }
   for (const auto& rejected : rejected_) {
     if (rejected.reason.empty()) {

@@ -363,11 +363,11 @@ void test_rejected_pool_accounting() {
   const std::vector<User> users{{"A", "a", 100}, {"B", "b", 0}};
   const auto valid = make_transaction("a", "b", 10, 1);
   auto tampered = make_transaction("a", "b", 5, 2);
-  tampered.transaction_id = "invalid";
+  tampered.transaction_id = std::string(64, '0');
   Chain chain(users, {valid, valid, tampered, make_transaction("a", "b", 1000, 3)}, 0);
   std::mt19937_64 random(42);
   const auto result = chain.process_next(random);
-  check(result.block_accepted && result.removed == 4, "mixed pool processed");
+  check(result.block_accepted && result.removed == 2, "remaining valid pool processed");
   check(chain.accepted_transactions() == 1 && chain.rejected().size() == 3 && chain.pending().empty(),
         "each submitted occurrence accounted for");
   check(chain.balances().at("a") == 90 && chain.balances().at("b") == 10, "rejections have no effect");
@@ -524,6 +524,55 @@ void test_merkle_block_validation() {
   chain.check_invariants();
 }
 
+void test_transaction_structure() {
+  Balances balances{{"a", 0}, {"b", 0}};
+  std::set<std::string> ids;
+  std::set<std::uint64_t> sequences;
+  const auto transaction = make_transaction("a", "b", 100, 1);
+  check(validate_transaction(transaction, balances, ids, sequences).empty(),
+        "structural validation does not reserve funds");
+  check(execute_transaction(transaction, balances, ids, sequences) == "insufficient funds",
+        "execution checks available funds");
+  for (const auto& invalid : {std::string(63, '0'), std::string(64, 'z'), std::string(64, 'A')}) {
+    auto changed = transaction;
+    changed.transaction_id = invalid;
+    check(validate_transaction(changed, balances, ids, sequences) == "invalid transaction ID format",
+          "ID must have canonical encoding");
+    check(execute_transaction(changed, balances, ids, sequences) == "invalid transaction ID format",
+          "execution checks ID format too");
+  }
+  check(balances.at("a") == 0 && balances.at("b") == 0 && ids.empty() && sequences.empty(),
+        "validation changes nothing");
+}
+
+void test_pool_admission() {
+  const std::vector<User> users{{"A", "a", 100}, {"B", "b", 0}, {"C", "c", 0}};
+  Chain chain(users, {}, 0);
+  const auto balances = chain.balances();
+  const auto first = make_transaction("a", "b", 70, 1);
+  const auto second = make_transaction("a", "c", 60, 2);
+  check(chain.add_transaction(first).empty() && chain.add_transaction(second).empty(),
+        "admission reserves no balance");
+  check(chain.balances() == balances && chain.pending().size() == 2, "pool admission is not execution");
+  check(chain.add_transaction(first) == "duplicate transaction", "duplicate pool ID rejected");
+  check(chain.add_transaction(make_transaction("a", "c", 1, 1)) == "duplicate sequence",
+        "duplicate pool sequence rejected");
+  check(chain.add_transaction(make_transaction("missing", "b", 1, 3)) == "unknown sender",
+        "unknown sender rejected on entry");
+  check(chain.add_transaction(make_transaction("a", "missing", 1, 4)) == "unknown receiver",
+        "unknown receiver rejected on entry");
+  check(chain.add_transaction(make_transaction("a", "b", 0, 5)) == "amount must be a positive integer",
+        "zero amount rejected on entry");
+  auto malformed = make_transaction("a", "b", 1, 6);
+  malformed.transaction_id = "bad";
+  check(chain.add_transaction(malformed) == "invalid transaction ID format", "malformed ID rejected on entry");
+  check(chain.rejected().size() == 6 && chain.pending().size() == 2, "admission rejections accounted for");
+  check(chain.accept_block(make_test_block(chain, {first})).empty(), "valid pool transaction accepted");
+  check(chain.add_transaction(first) == "duplicate transaction", "confirmed transaction cannot reenter");
+  check(chain.balances().at("a") == 30 && chain.pending().size() == 1, "reentry has no state effect");
+  chain.check_invariants();
+}
+
 int main() {
   const std::vector<std::pair<std::string, std::function<void()>>> tests = {
       {"custom hash", test_hash},
@@ -550,6 +599,8 @@ int main() {
       {"Merkle content and order", test_merkle_changes},
       {"invalid Merkle encoding", test_invalid_merkle_hashes},
       {"Merkle block validation", test_merkle_block_validation},
+      {"transaction structure and ID format", test_transaction_structure},
+      {"transaction pool admission", test_pool_admission},
   };
   int failures = 0;
   for (const auto& [name, test] : tests) {

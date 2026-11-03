@@ -19,6 +19,10 @@ bool satisfies_difficulty(const std::string& hash, int difficulty);
 MiningStats mine_block(Block& block);
 Amount total_balance(const Balances& balances);
 
+std::string validate_transaction(const Transaction& transaction, const Balances& balances,
+                                 const std::set<std::string>& accepted_ids,
+                                 const std::set<std::uint64_t>& accepted_sequences);
+
 // The caller supplies temporary state until a whole block has passed validation.
 std::string execute_transaction(const Transaction& transaction, Balances& balances,
                                 std::set<std::string>& accepted_ids,
@@ -45,6 +49,7 @@ class Chain {
  public:
   Chain(const std::vector<User>& users, std::vector<Transaction> pending, int difficulty);
 
+  std::string add_transaction(const Transaction& transaction);
   Candidate build_candidate(std::mt19937_64& random) const;
   std::string validate_block(const Block& block) const;
   std::string accept_block(const Block& block);
