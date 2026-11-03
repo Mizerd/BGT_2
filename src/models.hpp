@@ -50,6 +50,7 @@ Transaction make_transaction(const std::string& sender, const std::string& recei
 std::vector<Transaction> generate_transactions(const std::vector<User>& users,
                                                std::size_t count, std::uint64_t seed);
 std::string transaction_root(const std::vector<Transaction>& transactions);
+std::string merkle_root(const std::vector<Transaction>& transactions);
 std::string serialize_header(const BlockHeader& header);
 std::string calculate_block_hash(const BlockHeader& header);
 Block make_genesis_block();

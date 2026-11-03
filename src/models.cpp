@@ -1,6 +1,8 @@
 #include "models.hpp"
 #include "hashing.hpp"
 
+#include <algorithm>
+#include <array>
 #include <iomanip>
 #include <random>
 #include <sstream>
@@ -70,6 +72,30 @@ std::string transaction_root(const std::vector<Transaction>& transactions) {
     identifiers += transaction.transaction_id;
   }
   return hash_text(identifiers);
+}
+
+std::string merkle_root(const std::vector<Transaction>& transactions) {
+  if (transactions.empty()) {
+    return hash_text("");
+  }
+  std::vector<dihash::Digest256> level;
+  for (const auto& transaction : transactions) {
+    level.push_back(decode_hash(transaction.transaction_id));
+  }
+  while (level.size() > 1) {
+    if (level.size() % 2 != 0) {
+      level.push_back(level.back());
+    }
+    std::vector<dihash::Digest256> next;
+    for (std::size_t index = 0; index < level.size(); index += 2) {
+      std::array<std::uint8_t, 64> bytes{};
+      std::copy(level[index].begin(), level[index].end(), bytes.begin());
+      std::copy(level[index + 1].begin(), level[index + 1].end(), bytes.begin() + 32);
+      next.push_back(dihash::custom_hash(bytes));
+    }
+    level = std::move(next);
+  }
+  return dihash::to_hex(level.front());
 }
 
 std::string serialize_header(const BlockHeader& header) {

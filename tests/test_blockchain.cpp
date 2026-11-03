@@ -437,6 +437,64 @@ void test_invalid_initial_state() {
   check(balances.at("a") == 1 && ids.empty(), "overflow changes no state");
 }
 
+dihash::Digest256 reference_parent(const dihash::Digest256& left, const dihash::Digest256& right) {
+  dihash::Hasher hasher;
+  hasher.update(left);
+  hasher.update(right);
+  return hasher.finish();
+}
+
+void test_merkle_roots() {
+  const Transaction a{"", "", 0, 0, std::string(64, '0')};
+  const Transaction b{"", "", 0, 0, std::string(64, '1')};
+  const Transaction c{"", "", 0, 0, std::string(64, '2')};
+  const Transaction d{"", "", 0, 0, std::string(64, '3')};
+  const Transaction e{"", "", 0, 0, std::string(64, '4')};
+  dihash::Digest256 a_bytes{}, b_bytes{}, c_bytes{}, d_bytes{}, e_bytes{};
+  b_bytes.fill(0x11);
+  c_bytes.fill(0x22);
+  d_bytes.fill(0x33);
+  e_bytes.fill(0x44);
+  const auto ab = reference_parent(a_bytes, b_bytes);
+  const auto cc = reference_parent(c_bytes, c_bytes);
+  const auto cd = reference_parent(c_bytes, d_bytes);
+  const auto ee = reference_parent(e_bytes, e_bytes);
+  check(merkle_root({}) == hash_text(""), "empty Merkle root preserves genesis convention");
+  check(merkle_root({a}) == a.transaction_id, "one leaf is already the root");
+  check(merkle_root({a, b}) == dihash::to_hex(ab), "two leaves hash raw bytes");
+  check(merkle_root({a, b}) != hash_text(a.transaction_id + b.transaction_id), "hex text is not hashed");
+  check(merkle_root({a, b, c}) == dihash::to_hex(reference_parent(ab, cc)), "three leaves");
+  const auto expected_five = reference_parent(reference_parent(ab, cd), reference_parent(ee, ee));
+  check(merkle_root({a, b, c, d, e}) == dihash::to_hex(expected_five), "five leaves duplicate at two levels");
+  check(merkle_root({a, b, c}) == merkle_root({a, b, c, c}), "last odd leaf duplicated");
+}
+
+void test_merkle_changes() {
+  const auto first = make_transaction("a", "b", 10, 1);
+  const auto second = make_transaction("b", "a", 20, 2);
+  const auto modified = make_transaction("a", "b", 11, 1);
+  check(first.transaction_id != modified.transaction_id, "changed content gets a new ID");
+  check(merkle_root({first, second}) != merkle_root({modified, second}), "changed ID changes root");
+  check(merkle_root({first, second}) != merkle_root({second, first}), "different order changes root");
+  const std::string binary("\0A\0", 3);
+  const std::array<std::uint8_t, 3> bytes{0, 'A', 0};
+  check(hash_text(binary) == dihash::to_hex(dihash::custom_hash(bytes)), "text adapter is binary safe");
+  check(hash_text(binary) != hash_text(""), "zero byte does not terminate input");
+}
+
+void test_invalid_merkle_hashes() {
+  for (const auto& id : {std::string(63, '0'), std::string(65, '0'), std::string(64, 'g'),
+                         std::string(64, 'A'), std::string(64, '\0')}) {
+    bool rejected = false;
+    try {
+      merkle_root({{"a", "b", 1, 1, id}});
+    } catch (const std::invalid_argument&) {
+      rejected = true;
+    }
+    check(rejected, "invalid hash encoding rejected even for one leaf");
+  }
+}
+
 int main() {
   const std::vector<std::pair<std::string, std::function<void()>>> tests = {
       {"custom hash", test_hash},
@@ -459,6 +517,9 @@ int main() {
       {"no executable transactions", test_no_executable_transactions},
       {"reproducible chain", test_reproducible_chain},
       {"invalid initial state", test_invalid_initial_state},
+      {"Merkle roots and odd levels", test_merkle_roots},
+      {"Merkle content and order", test_merkle_changes},
+      {"invalid Merkle encoding", test_invalid_merkle_hashes},
   };
   int failures = 0;
   for (const auto& [name, test] : tests) {
