@@ -666,6 +666,54 @@ void test_candidate_alternatives() {
   check(chain.pending() == transactions, "overlapping alternatives leave pool unchanged");
 }
 
+void test_resumable_mining() {
+  const std::vector<User> users{{"A", "a", 100}, {"B", "b", 0}};
+  Chain chain(users, {make_transaction("a", "b", 5, 1)}, 3);
+  std::mt19937_64 random(42);
+  auto candidate = chain.build_candidate(random);
+  auto expected = candidate.block;
+  const auto expected_stats = mine_block(expected);
+  check(expected.header.nonce > 1, "fixture requires continued mining");
+  const auto header = candidate.block.header;
+  check(!mine_candidate(candidate, 1), "first limited search fails");
+  check(candidate.mining.attempts == 1 && candidate.block.header.nonce == 1, "next nonce preserved");
+  check(!mine_candidate(candidate, 1), "second limited search fails");
+  check(candidate.mining.attempts == 2 && candidate.block.header.nonce == 2, "unused nonce tested next");
+  check(mine_candidate(candidate, expected.header.nonce), "continued search finds original solution");
+  check(candidate.block.block_hash == expected.block_hash && candidate.mining.attempts == expected_stats.attempts,
+        "no attempts repeated or skipped");
+  auto unchanged = candidate.block.header;
+  unchanged.nonce = header.nonce;
+  check(serialize_header(unchanged) == serialize_header(header), "other header fields remain fixed");
+  const auto attempts = candidate.mining.attempts;
+  check(mine_candidate(candidate, 10) && candidate.mining.attempts == attempts, "solved candidate is not remined");
+  check(candidate.mining.duration_seconds >= 0, "cumulative mining time measured");
+}
+
+void test_mining_budget_edges() {
+  Candidate candidate;
+  candidate.block = make_genesis_block();
+  candidate.block.header.difficulty = 64;
+  bool rejected = false;
+  try {
+    mine_candidate(candidate, 0);
+  } catch (const std::invalid_argument&) {
+    rejected = true;
+  }
+  check(rejected && candidate.mining.attempts == 0, "zero budget rejected without mining");
+  check(!mine_candidate(candidate, 3), "small hard search fails within budget");
+  check(candidate.mining.attempts == 3 && candidate.block.header.nonce == 3, "budget exactly respected");
+  candidate.block.header.nonce = std::numeric_limits<std::uint64_t>::max();
+  rejected = false;
+  try {
+    mine_candidate(candidate, 1);
+  } catch (const std::overflow_error&) {
+    rejected = true;
+  }
+  check(rejected && candidate.block.header.nonce == std::numeric_limits<std::uint64_t>::max(),
+        "nonce cannot wrap around");
+}
+
 int main() {
   const std::vector<std::pair<std::string, std::function<void()>>> tests = {
       {"custom hash", test_hash},
@@ -698,6 +746,8 @@ int main() {
       {"invalid pool fields", test_pool_invalid_fields},
       {"five independent candidates", test_five_independent_candidates},
       {"candidate alternatives", test_candidate_alternatives},
+      {"resumable candidate mining", test_resumable_mining},
+      {"mining budget boundaries", test_mining_budget_edges},
   };
   int failures = 0;
   for (const auto& [name, test] : tests) {

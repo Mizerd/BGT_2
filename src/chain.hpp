@@ -36,7 +36,11 @@ struct RejectedTransaction {
 struct Candidate {
   Block block;
   std::vector<RejectedTransaction> rejected;
+  MiningStats mining{};
+  bool found = false;
 };
+
+bool mine_candidate(Candidate& candidate, std::uint64_t budget);
 
 struct StepResult {
   bool block_accepted = false;

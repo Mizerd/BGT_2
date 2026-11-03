@@ -16,22 +16,46 @@ bool satisfies_difficulty(const std::string& hash, int difficulty) {
 }
 
 MiningStats mine_block(Block& block) {
+  Candidate candidate;
+  candidate.block = block;
+  candidate.block.header.nonce = 0;
+  if (!mine_candidate(candidate, std::numeric_limits<std::uint64_t>::max())) {
+    throw std::runtime_error("nonce search exhausted");
+  }
+  block = std::move(candidate.block);
+  return candidate.mining;
+}
+
+bool mine_candidate(Candidate& candidate, std::uint64_t budget) {
+  auto& block = candidate.block;
   if (block.header.difficulty < 0 || block.header.difficulty > static_cast<int>(hash_length)) {
     throw std::invalid_argument("difficulty must be between 0 and 64");
   }
+  if (budget == 0) {
+    throw std::invalid_argument("mining budget must be positive");
+  }
+  if (candidate.found) {
+    return true;
+  }
   const auto start = std::chrono::steady_clock::now();
-  block.header.nonce = 0;
-  std::uint64_t attempts = 0;
-  while (attempts < std::numeric_limits<std::uint64_t>::max()) {
-    ++attempts;
+  for (std::uint64_t attempt = 0; attempt < budget; ++attempt) {
+    if (candidate.mining.attempts == std::numeric_limits<std::uint64_t>::max()) {
+      throw std::overflow_error("mining attempt counter exhausted");
+    }
+    ++candidate.mining.attempts;
     block.block_hash = calculate_block_hash(block.header);
     if (satisfies_difficulty(block.block_hash, block.header.difficulty)) {
-      const double duration = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
-      return {attempts, duration};
+      candidate.found = true;
+      break;
+    }
+    if (block.header.nonce == std::numeric_limits<std::uint64_t>::max()) {
+      throw std::overflow_error("nonce search exhausted");
     }
     ++block.header.nonce;
   }
-  throw std::runtime_error("nonce search exhausted");
+  candidate.mining.duration_seconds +=
+      std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
+  return candidate.found;
 }
 
 Amount total_balance(const Balances& balances) {
