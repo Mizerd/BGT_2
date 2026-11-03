@@ -778,6 +778,94 @@ void test_failed_competition_state() {
   chain.check_invariants();
 }
 
+void test_only_winner_changes_state() {
+  auto users = generate_users(4, 42);
+  for (auto& user : users) {
+    user.balance = 1000000;
+  }
+  const auto transactions = generate_transactions(users, 130, 42);
+  Chain chain(users, transactions, 0);
+  auto expected = chain.balances();
+  std::mt19937_64 random(42);
+  const auto result = chain.process_next(random, 1, 1);
+  check(result.block_accepted && result.candidates.size() == 5 && result.competition.winner == 0,
+        "exactly one deterministic winner");
+  const auto& winner = result.candidates[0].block;
+  std::set<std::string> confirmed;
+  for (const auto& transaction : winner.transactions) {
+    expected.at(transaction.sender) -= transaction.amount;
+    expected.at(transaction.receiver) += transaction.amount;
+    confirmed.insert(transaction.transaction_id);
+  }
+  check(chain.balances() == expected && chain.blocks().size() == 2 && chain.accepted_transactions() == 100,
+        "only winner transfers affect balances and chain");
+  check(chain.pending().size() == 30 && chain.rejected().empty(), "only winner transactions removed");
+  for (const auto& transaction : transactions) {
+    bool remains = false;
+    for (const auto& pending : chain.pending()) {
+      if (pending == transaction) {
+        remains = true;
+      }
+    }
+    check(remains == !confirmed.contains(transaction.transaction_id), "exact pool membership after competition");
+  }
+  bool overlap = false;
+  bool losing_only = false;
+  for (std::size_t index = 1; index < result.candidates.size(); ++index) {
+    const auto& loser = result.candidates[index];
+    check(loser.found, "fixture has multiple valid solutions");
+    for (const auto& transaction : loser.block.transactions) {
+      if (confirmed.contains(transaction.transaction_id)) {
+        overlap = true;
+      } else {
+        losing_only = true;
+      }
+    }
+    check_rejected_block(chain, loser.block, "incorrect previous hash");
+  }
+  check(overlap && losing_only, "both overlapping and losing-only transactions exercised");
+  chain.check_invariants();
+}
+
+void test_deferred_payment_becomes_funded() {
+  const std::vector<User> users{{"A", "a", 100}, {"B", "b", 0}, {"C", "c", 0}};
+  const auto payment = make_transaction("b", "c", 70, 1);
+  const auto funding = make_transaction("a", "b", 70, 2);
+  Chain chain(users, {payment, funding}, 0);
+  std::mt19937_64 random(42);
+  const auto first = chain.process_next(random, 1, 1);
+  check(first.block_accepted && chain.accepted_transactions() == 1, "funding winner accepted first");
+  check(chain.pending() == std::vector<Transaction>{payment} && chain.rejected().empty(),
+        "deferred transaction remains eligible even if another candidate included it");
+  const auto second = chain.process_next(random, 1, 1);
+  check(second.block_accepted && chain.pending().empty() && chain.accepted_transactions() == 2,
+        "payment reconsidered after balances change");
+  check(chain.balances().at("a") == 30 && chain.balances().at("b") == 0 && chain.balances().at("c") == 70,
+        "both blocks apply exactly once");
+  chain.check_invariants();
+}
+
+void test_progress_with_large_unfunded_pool() {
+  const std::vector<User> users{{"A", "a", 100}, {"B", "b", 0}, {"C", "c", 0}};
+  std::vector<Transaction> transactions;
+  for (std::uint64_t sequence = 1; sequence <= 200; ++sequence) {
+    transactions.push_back(make_transaction("b", "c", 1, sequence));
+  }
+  transactions.push_back(make_transaction("a", "b", 100, 201));
+  Chain chain(users, transactions, 0);
+  std::mt19937_64 random(42);
+  std::size_t steps = 0;
+  while (!chain.pending().empty()) {
+    const auto result = chain.process_next(random, 1, 1);
+    check(result.error.empty() && result.removed > 0, "full pool scan makes progress");
+    check(++steps <= 3, "bounded termination");
+    chain.check_invariants();
+  }
+  check(chain.accepted_transactions() == 101 && chain.rejected().size() == 100,
+        "funded payments accepted and unfunded remainder accounted for");
+  check(chain.balances().at("c") == 100 && total_balance(chain.balances()) == 100, "funds conserved");
+}
+
 int main() {
   const std::vector<std::pair<std::string, std::function<void()>>> tests = {
       {"custom hash", test_hash},
@@ -815,6 +903,9 @@ int main() {
       {"competition rounds and ties", test_competition_rounds},
       {"competition budget limit", test_competition_limit},
       {"failed competition preserves state", test_failed_competition_state},
+      {"only winner changes state", test_only_winner_changes_state},
+      {"deferred payment becomes funded", test_deferred_payment_becomes_funded},
+      {"large unfunded pool terminates", test_progress_with_large_unfunded_pool},
   };
   int failures = 0;
   for (const auto& [name, test] : tests) {
