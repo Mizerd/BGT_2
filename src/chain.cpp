@@ -97,7 +97,7 @@ std::string validate_block_state(const Block& block, const Block& previous, int 
   if (block.header.prev_hash != previous.block_hash) {
     return "incorrect previous hash";
   }
-  if (block.header.version != "0.1") {
+  if (block.header.version != "0.2") {
     return "unsupported block version";
   }
   if (block.header.timestamp <= previous.header.timestamp) {
@@ -109,7 +109,12 @@ std::string validate_block_state(const Block& block, const Block& previous, int 
   if (block.transactions.empty() || block.transactions.size() > 100) {
     return "block must contain 1 to 100 transactions";
   }
-  if (block.header.tx_root != transaction_root(block.transactions)) {
+  for (const auto& transaction : block.transactions) {
+    if (!is_hash(transaction.transaction_id)) {
+      return "invalid transaction ID format";
+    }
+  }
+  if (block.header.tx_root != merkle_root(block.transactions)) {
     return "incorrect transaction root";
   }
   if (block.block_hash != calculate_block_hash(block.header)) {
@@ -175,7 +180,7 @@ Candidate Chain::build_candidate(std::mt19937_64& random) const {
   }
   candidate.block.header = {blocks_.back().block_hash,
                             blocks_.back().header.timestamp + 1,
-                            "0.1", transaction_root(candidate.block.transactions), 0, difficulty_};
+                            "0.2", merkle_root(candidate.block.transactions), 0, difficulty_};
   return candidate;
 }
 

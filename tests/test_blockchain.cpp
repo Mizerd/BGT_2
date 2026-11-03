@@ -170,12 +170,14 @@ void test_genesis() {
   check(genesis.header.tx_root == hash_text(""), "genesis root");
   check(genesis.header.nonce == 0 && genesis.header.difficulty == 0, "genesis PoW exemption");
   check(genesis.block_hash == make_genesis_block().block_hash, "reproducible genesis");
+  check(genesis.block_hash == "e23688e389a5fa4d8f3814b9c43baba828e908796135c28e048275903549cf1b",
+        "v0.1 genesis remains unchanged");
 }
 
 void test_mining() {
   const auto genesis = make_genesis_block();
   const auto transactions = std::vector<Transaction>{make_transaction("a", "b", 5, 1)};
-  Block block{{genesis.block_hash, genesis_timestamp + 1, "0.1", transaction_root(transactions), 0, 3},
+  Block block{{genesis.block_hash, genesis_timestamp + 1, "0.2", merkle_root(transactions), 0, 3},
               transactions, ""};
   const auto original_header = block.header;
   const auto stats = mine_block(block);
@@ -221,8 +223,8 @@ void test_failed_block_is_atomic() {
   const std::vector<Transaction> transactions{make_transaction("a", "b", 70, 1),
                                                make_transaction("a", "c", 60, 2)};
   Chain chain(users, transactions, 0);
-  Block block{{chain.blocks().back().block_hash, genesis_timestamp + 1, "0.1",
-               transaction_root(transactions), 0, 0}, transactions, ""};
+  Block block{{chain.blocks().back().block_hash, genesis_timestamp + 1, "0.2",
+               merkle_root(transactions), 0, 0}, transactions, ""};
   mine_block(block);
   const auto before = chain.balances();
   check(chain.accept_block(block).find("insufficient funds") != std::string::npos,
@@ -267,7 +269,7 @@ void test_pool_processing() {
 Block make_test_block(const Chain& chain, const std::vector<Transaction>& transactions,
                       int difficulty = 0) {
   Block block{{chain.blocks().back().block_hash, chain.blocks().back().header.timestamp + 1,
-               "0.1", transaction_root(transactions), 0, difficulty}, transactions, ""};
+               "0.2", merkle_root(transactions), 0, difficulty}, transactions, ""};
   mine_block(block);
   return block;
 }
@@ -301,7 +303,7 @@ void test_invalid_block_headers() {
   changed.block_hash[0] = 'x';
   check_rejected_block(chain, changed, "incorrect block hash");
   changed = valid;
-  changed.header.version = "0.2";
+  changed.header.version = "0.3";
   check_rejected_block(chain, changed, "unsupported block version");
   changed = valid;
   changed.header.timestamp = genesis_timestamp;
@@ -495,6 +497,33 @@ void test_invalid_merkle_hashes() {
   }
 }
 
+void test_merkle_block_validation() {
+  const std::vector<User> users{{"A", "a", 100}, {"B", "b", 0}, {"C", "c", 0}};
+  const std::vector<Transaction> transactions{make_transaction("a", "b", 10, 1),
+                                               make_transaction("a", "c", 20, 2)};
+  Chain chain(users, transactions, 0);
+  const auto valid = make_test_block(chain, transactions);
+  check(chain.validate_block(valid).empty(), "v0.2 Merkle root validates");
+  auto changed = valid;
+  changed.header.tx_root = transaction_root(transactions);
+  mine_block(changed);
+  check_rejected_block(chain, changed, "incorrect transaction root");
+  changed = valid;
+  changed.transactions[0] = make_transaction("a", "b", 11, 1);
+  check_rejected_block(chain, changed, "incorrect transaction root");
+  changed = valid;
+  std::swap(changed.transactions[0], changed.transactions[1]);
+  check_rejected_block(chain, changed, "incorrect transaction root");
+  changed = valid;
+  changed.transactions[0].transaction_id = "bad";
+  check_rejected_block(chain, changed, "invalid transaction ID format");
+  changed = valid;
+  changed.header.version = "0.1";
+  check_rejected_block(chain, changed, "unsupported block version");
+  check(chain.accept_block(valid).empty(), "untampered Merkle block accepted");
+  chain.check_invariants();
+}
+
 int main() {
   const std::vector<std::pair<std::string, std::function<void()>>> tests = {
       {"custom hash", test_hash},
@@ -520,6 +549,7 @@ int main() {
       {"Merkle roots and odd levels", test_merkle_roots},
       {"Merkle content and order", test_merkle_changes},
       {"invalid Merkle encoding", test_invalid_merkle_hashes},
+      {"Merkle block validation", test_merkle_block_validation},
   };
   int failures = 0;
   for (const auto& [name, test] : tests) {
