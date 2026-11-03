@@ -209,10 +209,12 @@ Candidate Chain::build_candidate(std::mt19937_64& random) const {
   std::vector<std::size_t> selected(pending_.size());
   std::iota(selected.begin(), selected.end(), 0);
   std::shuffle(selected.begin(), selected.end(), random);
-  selected.resize(std::min<std::size_t>(100, selected.size()));
 
   Candidate candidate;
   for (const auto index : selected) {
+    if (candidate.block.transactions.size() == 100) {
+      break;
+    }
     const auto& transaction = pending_[index];
     const auto reason = execute_transaction(transaction, balances, ids, sequences);
     if (reason.empty()) {
@@ -225,6 +227,14 @@ Candidate Chain::build_candidate(std::mt19937_64& random) const {
                             blocks_.back().header.timestamp + 1,
                             "0.2", merkle_root(candidate.block.transactions), 0, difficulty_};
   return candidate;
+}
+
+std::vector<Candidate> Chain::build_candidates(std::mt19937_64& random) const {
+  std::vector<Candidate> candidates;
+  for (int number = 0; number < 5; ++number) {
+    candidates.push_back(build_candidate(random));
+  }
+  return candidates;
 }
 
 std::string Chain::validate_block(const Block& block) const {

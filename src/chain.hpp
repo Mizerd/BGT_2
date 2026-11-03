@@ -51,6 +51,7 @@ class Chain {
 
   std::string add_transaction(const Transaction& transaction);
   Candidate build_candidate(std::mt19937_64& random) const;
+  std::vector<Candidate> build_candidates(std::mt19937_64& random) const;
   std::string validate_block(const Block& block) const;
   std::string accept_block(const Block& block);
   StepResult process_next(std::mt19937_64& random);

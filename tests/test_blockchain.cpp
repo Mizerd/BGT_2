@@ -618,6 +618,54 @@ void test_pool_invalid_fields() {
   chain.check_invariants();
 }
 
+void test_five_independent_candidates() {
+  const std::vector<User> users{{"A", "a", 100}, {"B", "b", 0}, {"C", "c", 0}};
+  const std::vector<Transaction> transactions{make_transaction("a", "b", 70, 1),
+                                               make_transaction("a", "c", 60, 2)};
+  Chain chain(users, transactions, 0);
+  std::mt19937_64 random(42);
+  const auto candidates = chain.build_candidates(random);
+  check(candidates.size() == 5, "exactly five candidates");
+  for (const auto& candidate : candidates) {
+    check(candidate.block.header.prev_hash == chain.blocks().back().block_hash, "same confirmed parent");
+    check(candidate.block.header.timestamp == genesis_timestamp + 1, "same next height timestamp");
+    check(candidate.block.header.difficulty == 0 && candidate.block.header.version == "0.2",
+          "same required difficulty and version");
+    check(candidate.block.transactions.size() == 1 && candidate.rejected.size() == 1,
+          "each candidate starts with its own full balance");
+    check(candidate.block.header.tx_root == candidate.block.transactions[0].transaction_id,
+          "single transaction Merkle root");
+  }
+  check(chain.balances() == chain.initial_balances() && chain.pending() == transactions &&
+            chain.blocks().size() == 1 && chain.accepted_transactions() == 0,
+        "building five candidates changes no confirmed state or pool");
+  chain.check_invariants();
+}
+
+void test_candidate_alternatives() {
+  auto users = generate_users(4, 42);
+  for (auto& user : users) {
+    user.balance = 1000000;
+  }
+  const auto transactions = generate_transactions(users, 130, 42);
+  Chain chain(users, transactions, 0);
+  std::mt19937_64 random(42);
+  const auto candidates = chain.build_candidates(random);
+  std::set<std::vector<std::uint64_t>> orders;
+  for (const auto& candidate : candidates) {
+    check(candidate.block.transactions.size() == 100, "candidate capacity");
+    std::set<std::string> ids;
+    std::vector<std::uint64_t> order;
+    for (const auto& transaction : candidate.block.transactions) {
+      check(ids.insert(transaction.transaction_id).second, "no duplicate within candidate");
+      order.push_back(transaction.sequence);
+    }
+    orders.insert(order);
+  }
+  check(orders.size() == 5, "five distinct deterministic selections or orderings");
+  check(chain.pending() == transactions, "overlapping alternatives leave pool unchanged");
+}
+
 int main() {
   const std::vector<std::pair<std::string, std::function<void()>>> tests = {
       {"custom hash", test_hash},
@@ -648,6 +696,8 @@ int main() {
       {"transaction pool admission", test_pool_admission},
       {"balance limits and rollback", test_balance_limits},
       {"invalid pool fields", test_pool_invalid_fields},
+      {"five independent candidates", test_five_independent_candidates},
+      {"candidate alternatives", test_candidate_alternatives},
   };
   int failures = 0;
   for (const auto& [name, test] : tests) {
