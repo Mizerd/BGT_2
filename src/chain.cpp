@@ -58,6 +58,42 @@ bool mine_candidate(Candidate& candidate, std::uint64_t budget) {
   return candidate.found;
 }
 
+CompetitionResult mine_candidates(std::vector<Candidate>& candidates, std::uint64_t budget,
+                                  std::uint64_t max_attempts) {
+  if (candidates.size() != 5 || budget == 0 || max_attempts == 0) {
+    throw std::invalid_argument("competition needs five candidates and positive mining budgets");
+  }
+  budget = std::min(budget, max_attempts);
+  CompetitionResult result;
+  while (true) {
+    bool attempted = false;
+    for (auto& candidate : candidates) {
+      if (candidate.block.transactions.empty() || candidate.found || candidate.mining.attempts >= max_attempts) {
+        continue;
+      }
+      mine_candidate(candidate, std::min(budget, max_attempts - candidate.mining.attempts));
+      attempted = true;
+    }
+    if (attempted) {
+      ++result.rounds;
+    }
+    for (std::size_t index = 0; index < candidates.size(); ++index) {
+      if (candidates[index].found) {
+        result.winner = static_cast<int>(index);
+        return result;
+      }
+    }
+    if (!attempted) {
+      return result;
+    }
+    if (budget <= max_attempts / 2) {
+      budget *= 2;
+    } else {
+      budget = max_attempts;
+    }
+  }
+}
+
 Amount total_balance(const Balances& balances) {
   Amount total = 0;
   for (const auto& [key, balance] : balances) {

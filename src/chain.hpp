@@ -42,6 +42,14 @@ struct Candidate {
 
 bool mine_candidate(Candidate& candidate, std::uint64_t budget);
 
+struct CompetitionResult {
+  int winner = -1;
+  std::size_t rounds = 0;
+};
+
+CompetitionResult mine_candidates(std::vector<Candidate>& candidates, std::uint64_t budget,
+                                  std::uint64_t max_attempts);
+
 struct StepResult {
   bool block_accepted = false;
   std::size_t removed = 0;

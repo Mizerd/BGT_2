@@ -714,6 +714,49 @@ void test_mining_budget_edges() {
         "nonce cannot wrap around");
 }
 
+void test_competition_rounds() {
+  const std::vector<User> users{{"A", "a", 100}, {"B", "b", 0}};
+  const std::vector<Transaction> transactions{make_transaction("a", "b", 5, 1)};
+  Chain chain(users, transactions, 0);
+  std::mt19937_64 random(42);
+  auto candidates = chain.build_candidates(random);
+  const auto result = mine_candidates(candidates, 1, 1);
+  check(result.winner == 0 && result.rounds == 1, "first candidate wins ties after complete round");
+  for (const auto& candidate : candidates) {
+    check(candidate.found && candidate.mining.attempts == 1, "all five receive their round budget");
+    check(chain.validate_block(candidate.block).empty(), "each found solution is a valid block");
+  }
+  check(chain.pending() == transactions && chain.balances() == chain.initial_balances(),
+        "competition alone does not accept a winner");
+}
+
+void test_competition_limit() {
+  const std::vector<User> users{{"A", "a", 100}, {"B", "b", 0}};
+  Chain chain(users, {make_transaction("a", "b", 5, 1)}, 64);
+  std::mt19937_64 random(42);
+  auto candidates = chain.build_candidates(random);
+  const auto result = mine_candidates(candidates, 2, 7);
+  check(result.winner == -1 && result.rounds == 3, "budgets grow two, four, then one remaining attempt");
+  for (const auto& candidate : candidates) {
+    check(!candidate.found && candidate.mining.attempts == 7 && candidate.block.header.nonce == 7,
+          "each candidate stops at cap without restarting nonces");
+    auto last_header = candidate.block.header;
+    last_header.nonce = 6;
+    check(candidate.block.block_hash == calculate_block_hash(last_header), "last tested nonce was six");
+    check(candidate.block.header.difficulty == 64, "difficulty never lowered");
+  }
+  candidates = chain.build_candidates(random);
+  const auto capped = mine_candidates(candidates, 100, 3);
+  check(capped.rounds == 1 && candidates[0].mining.attempts == 3, "initial budget is capped too");
+  bool rejected = false;
+  try {
+    mine_candidates(candidates, 0, 3);
+  } catch (const std::invalid_argument&) {
+    rejected = true;
+  }
+  check(rejected, "zero competition budget rejected");
+}
+
 int main() {
   const std::vector<std::pair<std::string, std::function<void()>>> tests = {
       {"custom hash", test_hash},
@@ -748,6 +791,8 @@ int main() {
       {"candidate alternatives", test_candidate_alternatives},
       {"resumable candidate mining", test_resumable_mining},
       {"mining budget boundaries", test_mining_budget_edges},
+      {"competition rounds and ties", test_competition_rounds},
+      {"competition budget limit", test_competition_limit},
   };
   int failures = 0;
   for (const auto& [name, test] : tests) {
