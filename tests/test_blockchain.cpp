@@ -573,6 +573,51 @@ void test_pool_admission() {
   chain.check_invariants();
 }
 
+void test_balance_limits() {
+  const auto maximum = std::numeric_limits<Amount>::max();
+  Balances balances{{"a", maximum}, {"b", 0}};
+  std::set<std::string> ids;
+  std::set<std::uint64_t> sequences;
+  const auto transfer = make_transaction("a", "b", maximum, 1);
+  check(execute_transaction(transfer, balances, ids, sequences).empty(), "maximum balance transfers safely");
+  check(balances.at("a") == 0 && balances.at("b") == maximum, "no signed overflow at maximum");
+  check(total_balance(balances) == maximum, "maximum total preserved");
+  const auto before = balances;
+  check(execute_transaction(make_transaction("a", "b", 1, 2), balances, ids, sequences) ==
+            "insufficient funds", "sender cannot underflow");
+  check(balances == before && ids.size() == 1, "underflow rejection is atomic");
+  for (auto invalid : {Balances{{"a", -1}, {"b", 0}}, Balances{{"a", 1}, {"b", -1}}}) {
+    std::set<std::string> empty_ids;
+    std::set<std::uint64_t> empty_sequences;
+    const auto original = invalid;
+    check(execute_transaction(make_transaction("a", "b", 1, 1), invalid, empty_ids, empty_sequences) ==
+              "negative account balance", "negative input state rejected");
+    check(invalid == original && empty_ids.empty(), "negative input state remains unchanged");
+  }
+  const std::vector<User> users{{"A", "a", maximum}, {"B", "b", 0}};
+  const auto extra = make_transaction("a", "b", 1, 2);
+  Chain chain(users, {transfer, extra}, 0);
+  check(chain.pending().size() == 2, "pool admission does not reserve maximum funds");
+  check_rejected_block(chain, make_test_block(chain, {transfer, extra}), "insufficient funds");
+  check(chain.accept_block(make_test_block(chain, {transfer})).empty(), "maximum transfer block accepted");
+  chain.check_invariants();
+}
+
+void test_pool_invalid_fields() {
+  const std::vector<User> users{{"A", "a", 100}, {"B", "b", 0}};
+  auto incorrect_id = make_transaction("a", "b", 1, 4);
+  incorrect_id.amount = 2;
+  const std::vector<Transaction> invalid{make_transaction("a", "b", -1, 1),
+                                       make_transaction("a", "a", 1, 2),
+                                       make_transaction("a", "b", std::numeric_limits<Amount>::min(), 3),
+                                       incorrect_id};
+  Chain chain(users, invalid, 3);
+  check(chain.pending().empty() && chain.rejected().size() == invalid.size(), "invalid fields rejected at entry");
+  check(chain.balances() == chain.initial_balances(), "admission rejections preserve balances");
+  check(chain.rejected().back().reason == "incorrect transaction ID", "valid hex with incorrect ID distinguished");
+  chain.check_invariants();
+}
+
 int main() {
   const std::vector<std::pair<std::string, std::function<void()>>> tests = {
       {"custom hash", test_hash},
@@ -601,6 +646,8 @@ int main() {
       {"Merkle block validation", test_merkle_block_validation},
       {"transaction structure and ID format", test_transaction_structure},
       {"transaction pool admission", test_pool_admission},
+      {"balance limits and rollback", test_balance_limits},
+      {"invalid pool fields", test_pool_invalid_fields},
   };
   int failures = 0;
   for (const auto& [name, test] : tests) {
