@@ -280,7 +280,7 @@ Candidate Chain::build_candidate(std::mt19937_64& random) const {
     if (reason.empty()) {
       candidate.block.transactions.push_back(transaction);
     } else {
-      candidate.rejected.push_back({transaction, reason});
+      candidate.deferred.push_back({transaction, reason});
     }
   }
   candidate.block.header = {blocks_.back().block_hash,
@@ -328,27 +328,41 @@ std::string Chain::accept_block(const Block& block) {
   return "";
 }
 
-StepResult Chain::process_next(std::mt19937_64& random) {
-  auto candidate = build_candidate(random);
+StepResult Chain::process_next(std::mt19937_64& random, std::uint64_t budget,
+                               std::uint64_t max_attempts) {
+  if (budget == 0 || max_attempts == 0) {
+    throw std::invalid_argument("mining budgets must be positive");
+  }
   StepResult result;
-  if (!candidate.block.transactions.empty()) {
-    result.mining = mine_block(candidate.block);
-    result.error = accept_block(candidate.block);
-    if (!result.error.empty()) {
-      return result;
+  result.candidates = build_candidates(random);
+  bool executable = false;
+  for (const auto& candidate : result.candidates) {
+    if (!candidate.block.transactions.empty()) {
+      executable = true;
     }
-    result.block_accepted = true;
-    result.removed = candidate.block.transactions.size();
   }
-  for (const auto& rejected : candidate.rejected) {
-    const auto found = std::find(pending_.begin(), pending_.end(), rejected.transaction);
-    if (found == pending_.end()) {
-      throw std::logic_error("rejected transaction missing from pool");
+  if (!executable) {
+    // Every candidate scanned the whole pool without finding a valid transfer.
+    for (const auto& deferred : result.candidates.front().deferred) {
+      rejected_.push_back(deferred);
     }
-    pending_.erase(found);
-    rejected_.push_back(rejected);
-    ++result.removed;
+    result.removed = pending_.size();
+    pending_.clear();
+    return result;
   }
+  result.competition = mine_candidates(result.candidates, budget, max_attempts);
+  if (result.competition.winner < 0) {
+    result.error = "mining attempt limit reached";
+    return result;
+  }
+  const auto& winner = result.candidates[static_cast<std::size_t>(result.competition.winner)];
+  result.error = accept_block(winner.block);
+  if (!result.error.empty()) {
+    return result;
+  }
+  result.block_accepted = true;
+  result.mining = winner.mining;
+  result.removed = winner.block.transactions.size();
   return result;
 }
 

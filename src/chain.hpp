@@ -35,7 +35,7 @@ struct RejectedTransaction {
 
 struct Candidate {
   Block block;
-  std::vector<RejectedTransaction> rejected;
+  std::vector<RejectedTransaction> deferred;
   MiningStats mining{};
   bool found = false;
 };
@@ -54,6 +54,8 @@ struct StepResult {
   bool block_accepted = false;
   std::size_t removed = 0;
   MiningStats mining{};
+  std::vector<Candidate> candidates;
+  CompetitionResult competition;
   std::string error;
 };
 
@@ -66,7 +68,8 @@ class Chain {
   std::vector<Candidate> build_candidates(std::mt19937_64& random) const;
   std::string validate_block(const Block& block) const;
   std::string accept_block(const Block& block);
-  StepResult process_next(std::mt19937_64& random);
+  StepResult process_next(std::mt19937_64& random, std::uint64_t budget = 1000,
+                          std::uint64_t max_attempts = 1000000);
   void check_invariants() const;
 
   const Balances& initial_balances() const { return initial_balances_; }

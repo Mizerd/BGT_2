@@ -206,7 +206,7 @@ void test_candidate_and_acceptance() {
   const auto before = chain.balances();
   auto candidate = chain.build_candidate(random);
   check(candidate.block.transactions.size() == 1, "candidate prevents combined overspending");
-  check(candidate.rejected.size() == 1, "overspending entry explained");
+  check(candidate.deferred.size() == 1, "overspending entry explained");
   check(chain.balances() == before && chain.pending() == transactions && chain.blocks().size() == 1,
         "candidate building changes no confirmed state");
   mine_block(candidate.block);
@@ -367,7 +367,10 @@ void test_rejected_pool_accounting() {
   Chain chain(users, {valid, valid, tampered, make_transaction("a", "b", 1000, 3)}, 0);
   std::mt19937_64 random(42);
   const auto result = chain.process_next(random);
-  check(result.block_accepted && result.removed == 2, "remaining valid pool processed");
+  check(result.block_accepted && result.removed == 1, "only winner entries removed");
+  check(chain.pending().size() == 1 && chain.rejected().size() == 2, "unfunded transfer deferred");
+  const auto stopped = chain.process_next(random);
+  check(!stopped.block_accepted && stopped.removed == 1, "unfunded remainder rejected when no progress possible");
   check(chain.accepted_transactions() == 1 && chain.rejected().size() == 3 && chain.pending().empty(),
         "each submitted occurrence accounted for");
   check(chain.balances().at("a") == 90 && chain.balances().at("b") == 10, "rejections have no effect");
@@ -631,7 +634,7 @@ void test_five_independent_candidates() {
     check(candidate.block.header.timestamp == genesis_timestamp + 1, "same next height timestamp");
     check(candidate.block.header.difficulty == 0 && candidate.block.header.version == "0.2",
           "same required difficulty and version");
-    check(candidate.block.transactions.size() == 1 && candidate.rejected.size() == 1,
+    check(candidate.block.transactions.size() == 1 && candidate.deferred.size() == 1,
           "each candidate starts with its own full balance");
     check(candidate.block.header.tx_root == candidate.block.transactions[0].transaction_id,
           "single transaction Merkle root");
@@ -757,6 +760,24 @@ void test_competition_limit() {
   check(rejected, "zero competition budget rejected");
 }
 
+void test_failed_competition_state() {
+  const std::vector<User> users{{"A", "a", 100}, {"B", "b", 0}};
+  const std::vector<Transaction> transactions{make_transaction("a", "b", 5, 1)};
+  Chain chain(users, transactions, 64);
+  const auto before = chain.balances();
+  std::mt19937_64 random(42);
+  const auto result = chain.process_next(random, 2, 7);
+  check(!result.block_accepted && result.competition.winner == -1 && result.removed == 0 &&
+            result.error == "mining attempt limit reached", "failed competition stops with a reason");
+  check(chain.balances() == before && chain.blocks().size() == 1 && chain.pending() == transactions &&
+            chain.rejected().empty() && chain.accepted_transactions() == 0,
+        "failed searches change no confirmed state or pool entries");
+  for (const auto& candidate : result.candidates) {
+    check(candidate.mining.attempts == 7, "competition cap applies to each candidate");
+  }
+  chain.check_invariants();
+}
+
 int main() {
   const std::vector<std::pair<std::string, std::function<void()>>> tests = {
       {"custom hash", test_hash},
@@ -793,6 +814,7 @@ int main() {
       {"mining budget boundaries", test_mining_budget_edges},
       {"competition rounds and ties", test_competition_rounds},
       {"competition budget limit", test_competition_limit},
+      {"failed competition preserves state", test_failed_competition_state},
   };
   int failures = 0;
   for (const auto& [name, test] : tests) {
