@@ -2,6 +2,7 @@
 #include "hashing.hpp"
 
 #include <charconv>
+#include <array>
 #include <chrono>
 #include <iomanip>
 #include <iostream>
@@ -16,12 +17,16 @@ struct Options {
   std::size_t transactions = 10000;
   std::uint64_t seed = 20261029;
   int difficulty = 3;
+  std::uint64_t attempt_budget = 1000;
+  std::uint64_t max_attempts = 1000000;
 };
 
 void print_usage() {
   std::cout << "Usage: blockchain [--users N] [--transactions N] [--seed N] [--difficulty N]\n"
+            << "                  [--attempt-budget N] [--max-attempts N]\n"
             << "Defaults: users=1000 transactions=10000 seed=20261029 difficulty=3\n"
-            << "Users must be >= 2; transactions and seed >= 0; difficulty 0..64.\n";
+            << "Mining: attempt-budget=1000 per round, max-attempts=1000000 per candidate per height\n"
+            << "Users >= 2; transactions and seed >= 0; difficulty 0..64; mining budgets >= 1.\n";
 }
 
 std::uint64_t parse_number(std::string_view text) {
@@ -38,7 +43,7 @@ Options parse_options(int argc, char* argv[]) {
   for (int index = 1; index < argc; ++index) {
     const std::string_view option = argv[index];
     if (option != "--users" && option != "--transactions" && option != "--seed" &&
-        option != "--difficulty") {
+        option != "--difficulty" && option != "--attempt-budget" && option != "--max-attempts") {
       throw std::invalid_argument("unknown option: " + std::string(option));
     }
     if (++index == argc) {
@@ -47,6 +52,10 @@ Options parse_options(int argc, char* argv[]) {
     const auto value = parse_number(argv[index]);
     if (option == "--seed") {
       options.seed = value;
+    } else if (option == "--attempt-budget") {
+      options.attempt_budget = value;
+    } else if (option == "--max-attempts") {
+      options.max_attempts = value;
     } else if (option == "--difficulty") {
       if (value > hash_length) {
         throw std::invalid_argument("difficulty must be between 0 and 64");
@@ -66,6 +75,9 @@ Options parse_options(int argc, char* argv[]) {
   if (options.users < 2) {
     throw std::invalid_argument("at least two users are required");
   }
+  if (options.attempt_budget == 0 || options.max_attempts == 0) {
+    throw std::invalid_argument("mining budgets must be positive");
+  }
   return options;
 }
 
@@ -76,6 +88,29 @@ void print_block(std::size_t height, const Block& block, const MiningStats& mini
             << "  prev_hash=" << block.header.prev_hash << '\n'
             << "  tx_root=" << block.header.tx_root << '\n'
             << "  block_hash=" << block.block_hash << '\n';
+}
+
+void print_competition(std::size_t height, const StepResult& result) {
+  std::cout << "Competition height=" << height << " | rounds=" << result.competition.rounds << " | winner=";
+  if (result.competition.winner >= 0) {
+    std::cout << result.competition.winner + 1;
+  } else {
+    std::cout << "none";
+  }
+  std::cout << " | accepted_height=";
+  if (result.block_accepted) {
+    std::cout << height;
+  } else {
+    std::cout << "none";
+  }
+  std::cout << '\n';
+  for (std::size_t index = 0; index < result.candidates.size(); ++index) {
+    const auto& candidate = result.candidates[index];
+    std::cout << "  Candidate " << index + 1 << " | transactions=" << candidate.block.transactions.size()
+              << " | attempts=" << candidate.mining.attempts
+              << " | mining=" << candidate.mining.duration_seconds << "s"
+              << " | found=" << (candidate.found ? "yes" : "no") << '\n';
+  }
 }
 
 int main(int argc, char* argv[]) {
@@ -91,10 +126,23 @@ int main(int argc, char* argv[]) {
     Chain chain(users, std::move(transactions), options.difficulty);
     std::mt19937_64 random(options.seed);
     std::string stopped_reason;
+    std::size_t competitions = 0;
+    std::size_t rounds = 0;
+    MiningStats total_mining{};
+    std::array<std::size_t, 5> wins{};
     std::cout << std::fixed << std::setprecision(6);
     while (!chain.pending().empty()) {
-      const auto result = chain.process_next(random);
+      const auto height = chain.blocks().size();
+      const auto result = chain.process_next(random, options.attempt_budget, options.max_attempts);
+      ++competitions;
+      rounds += result.competition.rounds;
+      for (const auto& candidate : result.candidates) {
+        total_mining.attempts += candidate.mining.attempts;
+        total_mining.duration_seconds += candidate.mining.duration_seconds;
+      }
+      print_competition(height, result);
       if (result.block_accepted) {
+        ++wins[static_cast<std::size_t>(result.competition.winner)];
         print_block(chain.blocks().size() - 1, chain.blocks().back(), result.mining);
       }
       if (!result.error.empty() || result.removed == 0) {
@@ -110,9 +158,18 @@ int main(int argc, char* argv[]) {
               << "\nAccepted transactions: " << chain.accepted_transactions()
               << "\nRejected transactions: " << chain.rejected().size()
               << "\nRemaining transactions: " << chain.pending().size()
+              << "\nCompetitions: " << competitions
+              << "\nMining rounds: " << rounds
+              << "\nTotal mining attempts: " << total_mining.attempts
+              << "\nTotal mining duration: " << total_mining.duration_seconds << "s"
               << "\nInitial total balance: " << total_balance(chain.initial_balances())
               << "\nFinal total balance: " << total_balance(chain.balances())
               << "\nTotal execution time: " << duration << "s\n";
+    std::cout << "Candidate wins:";
+    for (std::size_t index = 0; index < wins.size(); ++index) {
+      std::cout << ' ' << index + 1 << '=' << wins[index];
+    }
+    std::cout << '\n';
     std::map<std::string, std::size_t> reasons;
     for (const auto& rejected : chain.rejected()) {
       ++reasons[rejected.reason];
