@@ -31,3 +31,9 @@ add_test(NAME blockchain_tests COMMAND blockchain_tests)
 add_executable(v03_tests tests/test_v03.cpp)
 target_link_libraries(v03_tests PRIVATE chain_core)
 add_test(NAME v03_tests COMMAND v03_tests)
+
+find_package(Python3 COMPONENTS Interpreter QUIET)
+if(Python3_Interpreter_FOUND)
+  add_test(NAME cli_checks COMMAND ${Python3_EXECUTABLE}
+           ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_cli.py $<TARGET_FILE:blockchain>)
+endif()
