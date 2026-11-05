@@ -1,5 +1,4 @@
 import argparse
-import os
 from pathlib import Path
 import re
 import shlex
@@ -39,6 +38,43 @@ def summary(output):
     match = re.search(r"(\d+)/(\d+) tests passed", output)
     check(match is not None, "Missing test summary")
     return tuple(int(value) for value in match.groups())
+
+
+def normalized(output):
+    output = re.sub(r"mining=[0-9.]+s", "mining=TIME", output)
+    output = re.sub(r"Total mining duration: [0-9.]+s", "Total mining duration: TIME", output)
+    return re.sub(r"Total execution time: [0-9.]+s", "Total execution time: TIME", output)
+
+
+def compare_simulations(baseline, current):
+    small = ["--users", "5", "--transactions", "12", "--seed", "42", "--difficulty", "3"]
+    for name, arguments in [("small", small), ("default", [])]:
+        old_output = run([baseline / "blockchain", *arguments])
+        new_output = run([current / "blockchain", *arguments])
+        check(normalized(old_output) == normalized(new_output), f"Different {name} simulation")
+        check("Invariants: passed" in new_output, "Chain replay did not pass")
+        if name == "default":
+            expected = {
+                "Users": 1000, "Generated transactions": 10000,
+                "Accepted blocks (excluding genesis)": 100, "Accepted transactions": 9971,
+                "Rejected transactions": 29, "Remaining transactions": 0,
+                "Initial total balance": 496232748, "Final total balance": 496232748,
+                "Competitions": 101, "Mining rounds": 132, "Total mining attempts": 711048,
+            }
+            for label, value in expected.items():
+                check(f"{label}: {value}\n" in new_output, f"Wrong default result: {label}")
+            blocks = re.findall(r"Block (\d+) \| transactions=(\d+) \| difficulty=(\d+) \| nonce=(\d+) \| attempts=(\d+)", new_output)
+            check(len(blocks) == 100 and sum(int(block[1]) for block in blocks) == 9971, "Wrong block accounting")
+            check(all(int(block[2]) == 3 and int(block[4]) == int(block[3]) + 1 for block in blocks),
+                  "Wrong difficulty or repeated nonce attempts")
+            hashes = re.findall(r"  block_hash=000[0-9a-f]{61}\n", new_output)
+            check(len(hashes) == 100, "A block does not satisfy difficulty three")
+            candidates = re.findall(r"  Candidate (\d+) \| transactions=(\d+) \| attempts=(\d+)", new_output)
+            check(len(candidates) == 505, "Expected five candidates in each competition")
+            check(sum(int(candidate[2]) for candidate in candidates) == 711048, "Mining attempts do not add up")
+            check(all(int(candidate[1]) <= 100 and int(candidate[2]) <= 1000000 for candidate in candidates),
+                  "Candidate capacity or mining limit exceeded")
+        print(f"{name.capitalize()} simulation: identical blocks, winners, attempts and totals")
 
 
 def main():
@@ -91,6 +127,9 @@ def main():
           f"v0.3 {new_regressions[0]}/{new_regressions[1]}")
     print("Expected baseline failures: " + ", ".join(sorted(failures)))
     print("CLI: 12/12 on each version")
+    compare_simulations(old_build, current)
+    check(not run(["git", "-C", baseline, "status", "--porcelain", "--untracked-files=no"]).strip(),
+          "Comparison modified the baseline")
 
 
 if __name__ == "__main__":
