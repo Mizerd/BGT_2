@@ -6,3 +6,4 @@ flags=(-std=c++20 -O2 -Wall -Wextra -Wpedantic -Isrc)
 sources=(src/custom_hash.cpp src/models.cpp src/chain.cpp)
 "${CXX:-c++}" "${flags[@]}" "${sources[@]}" src/main.cpp -o build/blockchain
 "${CXX:-c++}" "${flags[@]}" "${sources[@]}" tests/test_blockchain.cpp -o build/tests
+"${CXX:-c++}" "${flags[@]}" "${sources[@]}" tests/test_v03.cpp -o build/tests_v03

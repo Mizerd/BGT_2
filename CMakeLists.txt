@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(blockchain_assignment VERSION 0.2 LANGUAGES CXX)
+project(blockchain_assignment VERSION 0.3 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -27,3 +27,7 @@ set_target_properties(blockchain_tests PROPERTIES OUTPUT_NAME tests)
 
 enable_testing()
 add_test(NAME blockchain_tests COMMAND blockchain_tests)
+
+add_executable(v03_tests tests/test_v03.cpp)
+target_link_libraries(v03_tests PRIVATE chain_core)
+add_test(NAME v03_tests COMMAND v03_tests)
