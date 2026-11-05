@@ -336,19 +336,19 @@ std::string Chain::accept_block(const Block& block) {
   if (!reason.empty()) {
     return reason;
   }
-  auto pending = pending_;
   for (const auto& transaction : block.transactions) {
-    const auto found = std::find(pending.begin(), pending.end(), transaction);
-    if (found == pending.end()) {
+    if (std::find(pending_.begin(), pending_.end(), transaction) == pending_.end()) {
       return "transaction is not in the pending pool";
     }
-    pending.erase(found);
   }
   blocks_.push_back(block);
   balances_ = std::move(balances);
   accepted_ids_ = std::move(ids);
   accepted_sequences_ = std::move(sequences);
-  pending_ = std::move(pending);
+  for (const auto& transaction : block.transactions) {
+    const auto found = std::find(pending_.begin(), pending_.end(), transaction);
+    pending_.erase(found);
+  }
   return "";
 }
 
