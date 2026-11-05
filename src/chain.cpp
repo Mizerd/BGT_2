@@ -35,6 +35,10 @@ bool mine_candidate(Candidate& candidate, std::uint64_t budget) {
     throw std::invalid_argument("mining budget must be positive");
   }
   if (candidate.found) {
+    if (block.block_hash != calculate_block_hash(block.header) ||
+        !satisfies_difficulty(block.block_hash, block.header.difficulty)) {
+      throw std::invalid_argument("cached mining solution is invalid");
+    }
     return true;
   }
   const auto start = std::chrono::steady_clock::now();

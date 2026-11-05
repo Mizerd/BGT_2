@@ -68,11 +68,40 @@ void test_empty_competition() {
   }
 }
 
+void test_stale_solved_candidate() {
+  Chain chain({{"A", "a", 100}, {"B", "b", 0}}, {make_transaction("a", "b", 5, 1)}, 0);
+  std::mt19937_64 random(42);
+  auto solved = chain.build_candidate(random);
+  check(mine_candidate(solved, 1), "valid fixture is solved");
+  std::vector<Candidate> invalid(3, solved);
+  invalid[0].block.block_hash = std::string(64, '0');
+  ++invalid[1].block.header.timestamp;
+  invalid[2].block.header.difficulty = 64;
+  invalid[2].block.block_hash = calculate_block_hash(invalid[2].block.header);
+  check(!satisfies_difficulty(invalid[2].block.block_hash, 64), "fixture has no valid proof");
+  for (auto& candidate : invalid) {
+    const auto header = serialize_header(candidate.block.header);
+    const auto hash = candidate.block.block_hash;
+    const auto attempts = candidate.mining.attempts;
+    bool rejected = false;
+    try {
+      mine_candidate(candidate, 1);
+    } catch (const std::invalid_argument&) {
+      rejected = true;
+    }
+    check(rejected, "found flag cannot replace hash and PoW verification");
+    check(candidate.mining.attempts == attempts && serialize_header(candidate.block.header) == header &&
+              candidate.block.block_hash == hash, "invalid cached solution is not mined or changed");
+  }
+  chain.check_invariants();
+}
+
 int main() {
   const std::vector<std::pair<std::string, std::function<void()>>> tests = {
       {"six Merkle leaves", test_six_merkle_leaves},
       {"attempt counter limit", test_attempt_counter_limit},
       {"empty competition", test_empty_competition},
+      {"stale solved candidate", test_stale_solved_candidate},
   };
   int failures = 0;
   for (const auto& [name, test] : tests) {
