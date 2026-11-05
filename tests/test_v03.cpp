@@ -180,6 +180,51 @@ void test_competition_existing_budget() {
   check_unchanged(candidates, cached);
 }
 
+Block block_for(const Chain& chain, const std::vector<Transaction>& transactions) {
+  Block block{{chain.blocks().back().block_hash, chain.blocks().back().header.timestamp + 1,
+               "0.2", merkle_root(transactions), 0, 0}, transactions, ""};
+  mine_block(block);
+  return block;
+}
+
+void test_late_pool_rejection() {
+  const std::vector<User> users{{"A", "a", 100}, {"B", "b", 0}, {"C", "c", 0}};
+  const auto first = make_transaction("a", "b", 10, 1);
+  const auto second = make_transaction("a", "c", 20, 2);
+  const auto outside = make_transaction("b", "c", 5, 3);
+  Chain chain(users, {first, second}, 0);
+  const auto balances = chain.balances();
+  const auto pending = chain.pending();
+  const auto invalid = block_for(chain, {first, outside});
+  check(chain.validate_block(invalid).empty(), "both transfers are valid in order");
+  check(chain.accept_block(invalid) == "transaction is not in the pending pool", "last entry is outside pool");
+  check(chain.balances() == balances && chain.pending() == pending && chain.blocks().size() == 1 &&
+            chain.accepted_transactions() == 0 && chain.rejected().empty(),
+        "late pool rejection rolls back the earlier pool transaction too");
+  chain.check_invariants();
+  check(chain.accept_block(block_for(chain, {first, second})).empty(), "valid block still accepts after rejection");
+  check(chain.balances().at("a") == 70 && chain.balances().at("b") == 10 && chain.balances().at("c") == 20,
+        "only accepted transfers change balances");
+  chain.check_invariants();
+}
+
+void test_pool_removal_order() {
+  std::vector<Transaction> transactions;
+  for (std::uint64_t sequence = 1; sequence <= 5; ++sequence) {
+    transactions.push_back(make_transaction("a", "b", static_cast<Amount>(sequence), sequence));
+  }
+  Chain chain({{"A", "a", 100}, {"B", "b", 0}}, transactions, 0);
+  check(chain.accept_block(block_for(chain, {transactions[3], transactions[1]})).empty(), "unordered subset accepts");
+  check(chain.pending() == std::vector<Transaction>{transactions[0], transactions[2], transactions[4]},
+        "unconfirmed entries retain their original order");
+  check(chain.balances().at("a") == 94 && chain.balances().at("b") == 6, "subset counted exactly once");
+  check(chain.accept_block(block_for(chain, {transactions[4], transactions[0], transactions[2]})).empty(),
+        "remaining entries accept in another order");
+  check(chain.pending().empty() && chain.accepted_transactions() == 5 && chain.balances().at("a") == 85 &&
+            chain.balances().at("b") == 15, "no missing or repeated pool entry");
+  chain.check_invariants();
+}
+
 int main() {
   const std::vector<std::pair<std::string, std::function<void()>>> tests = {
       {"six Merkle leaves", test_six_merkle_leaves},
@@ -189,6 +234,8 @@ int main() {
       {"competition context", test_competition_context},
       {"competition cached proof", test_competition_cached_proof},
       {"competition existing budget", test_competition_existing_budget},
+      {"late pool rejection", test_late_pool_rejection},
+      {"pool removal order", test_pool_removal_order},
   };
   int failures = 0;
   for (const auto& [name, test] : tests) {
