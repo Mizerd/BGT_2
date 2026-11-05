@@ -68,6 +68,26 @@ CompetitionResult mine_candidates(std::vector<Candidate>& candidates, std::uint6
     throw std::invalid_argument("competition needs five candidates and positive mining budgets");
   }
   budget = std::min(budget, max_attempts);
+  const auto& first = candidates.front().block.header;
+  for (auto& candidate : candidates) {
+    const auto& header = candidate.block.header;
+    if (header.prev_hash != first.prev_hash || header.timestamp != first.timestamp ||
+        header.version != first.version || header.difficulty != first.difficulty) {
+      throw std::invalid_argument("candidates must share parent, timestamp, version and difficulty");
+    }
+    if (header.difficulty < 0 || header.difficulty > static_cast<int>(hash_length)) {
+      throw std::invalid_argument("difficulty must be between 0 and 64");
+    }
+    if (candidate.mining.attempts > max_attempts) {
+      throw std::invalid_argument("candidate already exceeds the mining limit");
+    }
+    if (candidate.found) {
+      if (candidate.block.transactions.empty()) {
+        throw std::invalid_argument("empty candidate cannot win");
+      }
+      mine_candidate(candidate, budget);
+    }
+  }
   CompetitionResult result;
   while (true) {
     bool attempted = false;

@@ -96,12 +96,99 @@ void test_stale_solved_candidate() {
   chain.check_invariants();
 }
 
+void check_unchanged(const std::vector<Candidate>& candidates, const std::vector<Candidate>& before) {
+  for (std::size_t index = 0; index < candidates.size(); ++index) {
+    const auto& candidate = candidates[index];
+    const auto& original = before[index];
+    check(serialize_header(candidate.block.header) == serialize_header(original.block.header) &&
+              candidate.block.block_hash == original.block.block_hash &&
+              candidate.block.transactions == original.block.transactions && candidate.found == original.found &&
+              candidate.mining.attempts == original.mining.attempts &&
+              candidate.mining.duration_seconds == original.mining.duration_seconds,
+          "invalid competition must be rejected before any candidate is mined");
+  }
+}
+
+void test_competition_context() {
+  Chain chain({{"A", "a", 100}, {"B", "b", 0}}, {make_transaction("a", "b", 5, 1)}, 0);
+  std::mt19937_64 random(42);
+  for (int field = 0; field < 4; ++field) {
+    auto candidates = chain.build_candidates(random);
+    auto& header = candidates.back().block.header;
+    if (field == 0) header.prev_hash = std::string(64, '0');
+    if (field == 1) ++header.timestamp;
+    if (field == 2) header.version = "0.3";
+    if (field == 3) header.difficulty = 1;
+    const auto before = candidates;
+    bool rejected = false;
+    try {
+      mine_candidates(candidates, 1, 1);
+    } catch (const std::invalid_argument&) {
+      rejected = true;
+    }
+    check(rejected, "competition must contain candidates for the same height and rules");
+    check_unchanged(candidates, before);
+  }
+}
+
+void test_competition_cached_proof() {
+  Chain chain({{"A", "a", 100}, {"B", "b", 0}}, {make_transaction("a", "b", 5, 1)}, 0);
+  std::mt19937_64 random(42);
+  for (int invalid = 0; invalid < 2; ++invalid) {
+    auto candidates = chain.build_candidates(random);
+    if (invalid == 0) {
+      candidates.back().found = true;
+      candidates.back().block.block_hash = "bad";
+    } else {
+      for (auto& candidate : candidates) {
+        candidate.block = make_genesis_block();
+      }
+      candidates[0].found = true;
+    }
+    const auto before = candidates;
+    bool rejected = false;
+    try {
+      mine_candidates(candidates, 1, 1);
+    } catch (const std::invalid_argument&) {
+      rejected = true;
+    }
+    check(rejected, "forged or empty cached winner rejected");
+    check_unchanged(candidates, before);
+  }
+}
+
+void test_competition_existing_budget() {
+  Chain chain({{"A", "a", 100}, {"B", "b", 0}}, {make_transaction("a", "b", 5, 1)}, 0);
+  std::mt19937_64 random(42);
+  auto candidates = chain.build_candidates(random);
+  candidates.back().mining.attempts = 2;
+  const auto before = candidates;
+  bool rejected = false;
+  try {
+    mine_candidates(candidates, 1, 1);
+  } catch (const std::invalid_argument&) {
+    rejected = true;
+  }
+  check(rejected, "new limit cannot be smaller than work already recorded");
+  check_unchanged(candidates, before);
+  candidates = chain.build_candidates(random);
+  const auto solved = mine_candidates(candidates, 1, 1);
+  check(solved.winner == 0, "fixture solved within limit");
+  const auto cached = candidates;
+  const auto repeated = mine_candidates(candidates, 1, 1);
+  check(repeated.winner == 0 && repeated.rounds == 0, "valid cached solutions stay usable");
+  check_unchanged(candidates, cached);
+}
+
 int main() {
   const std::vector<std::pair<std::string, std::function<void()>>> tests = {
       {"six Merkle leaves", test_six_merkle_leaves},
       {"attempt counter limit", test_attempt_counter_limit},
       {"empty competition", test_empty_competition},
       {"stale solved candidate", test_stale_solved_candidate},
+      {"competition context", test_competition_context},
+      {"competition cached proof", test_competition_cached_proof},
+      {"competition existing budget", test_competition_existing_budget},
   };
   int failures = 0;
   for (const auto& [name, test] : tests) {
