@@ -1,0 +1,7 @@
+{
+  "python_bitcoinlib": "0.12.2",
+  "RawProxy_default_import": "failed: OpenSSL library not located on NixOS; undefined symbol BN_add",
+  "core_transaction_decoder": "imported successfully",
+  "selected_rpc_client": "official bitcoin-cli subprocess; cookie auth and exact Decimal JSON parsing",
+  "package_modified": false
+}

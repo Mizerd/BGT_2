@@ -1,0 +1,12 @@
+{
+  "observed_at": "2026-11-10T07:13:30.460503+00:00",
+  "source": "live local Bitcoin Core RPC via bitcoin-cli",
+  "chain": "regtest",
+  "blocks": 102,
+  "headers": 102,
+  "initialblockdownload": false,
+  "bestblockhash": "14adc4f7befad3ee4b02a3a9730b026887f3466a8a64340bf1d27e7770e662db",
+  "core_version": 320100,
+  "core_subversion": "/Satoshi:32.1.0/",
+  "connections": 0
+}
