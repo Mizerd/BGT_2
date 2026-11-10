@@ -29,6 +29,8 @@ def download(url, destination):
 
 
 def main():
+    if sys.version_info < (3, 12):
+        raise RuntimeError("Python 3.12+ is required for safe tar extraction")
     if os.uname().machine != "x86_64" or sys.platform != "linux":
         raise RuntimeError("This pinned installer targets Linux x86_64; use verified native Core binaries elsewhere")
     downloads = DEPS / "downloads"
@@ -109,4 +111,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except (RuntimeError, ValueError, OSError, subprocess.SubprocessError) as error:
+        sys.exit("Error: " + str(error))

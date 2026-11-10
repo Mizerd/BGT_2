@@ -1,6 +1,5 @@
 from copy import deepcopy
 from decimal import Decimal
-import json
 import os
 from pathlib import Path
 import subprocess
@@ -211,6 +210,20 @@ class OfflineTests(unittest.TestCase):
         with patch("common.subprocess.run", side_effect=subprocess.TimeoutExpired("cli", 1)):
             with self.assertRaisesRegex(RPCError, "timed out"):
                 RPC().call("getblockchaininfo")
+
+    def test_wrong_rpc_network(self):
+        reply = subprocess.CompletedProcess([], 0, '{"chain":"main"}', "")
+        with patch("common.subprocess.run", return_value=reply):
+            with self.assertRaisesRegex(RPCError, "not regtest"):
+                RPC().require_regtest()
+
+    def test_historical_block_output_total(self):
+        from bitcoin.core import CBlock
+        raw = (ROOT / "fixtures/block277316.bin").read_bytes()
+        block = CBlock.deserialize(raw)
+        reference = load(ROOT / "evidence/historical-block277316.json")
+        self.assertEqual(sha256d(raw[:80])[::-1].hex(), reference["hash"])
+        self.assertEqual(sum(output.nValue for tx in block.vtx for output in tx.vout), 1032207722534)
         with patch("common.subprocess.run", return_value=subprocess.CompletedProcess([], 1, "", "No authentication cookie")):
             with self.assertRaisesRegex(RPCError, "authentication"):
                 RPC().call("getblockchaininfo")

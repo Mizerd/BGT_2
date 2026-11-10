@@ -1,0 +1,549 @@
+{
+  "observed_at": "2026-11-10T08:03:00.582392+00:00",
+  "kind": "executed evidence audit against PDF requirements",
+  "live_requested": true,
+  "all_passed": true,
+  "checks": [
+    {
+      "requirement": "Core archive authenticity",
+      "result": "passed",
+      "evidence": [
+        "core-installation.json"
+      ]
+    },
+    {
+      "requirement": "Unmodified official bitcoind",
+      "result": "passed",
+      "evidence": [
+        "core-installation.json"
+      ]
+    },
+    {
+      "requirement": "Unmodified official bitcoin-cli",
+      "result": "passed",
+      "evidence": [
+        "core-installation.json"
+      ]
+    },
+    {
+      "requirement": "Initial isolated regtest",
+      "result": "passed",
+      "evidence": [
+        "node-start.json"
+      ]
+    },
+    {
+      "requirement": "Coinbase maturity",
+      "result": "passed",
+      "evidence": [
+        "lab/funded-balances.json",
+        "lab/mined-blocks.json"
+      ]
+    },
+    {
+      "requirement": "Mempool before confirmation",
+      "result": "passed",
+      "evidence": [
+        "lab/before.json"
+      ]
+    },
+    {
+      "requirement": "Confirmed receiver payment",
+      "result": "passed",
+      "evidence": [
+        "lab/after.json",
+        "lab/block.json"
+      ]
+    },
+    {
+      "requirement": "Exact indexed prevouts and fee",
+      "result": "passed",
+      "evidence": [
+        "transaction-analysis.json",
+        "lab/prevouts.json"
+      ]
+    },
+    {
+      "requirement": "Recipient independent of vout zero",
+      "result": "passed",
+      "evidence": [
+        "transaction-analysis.json",
+        "lab/output-wallet-info.json"
+      ]
+    },
+    {
+      "requirement": "SegWit and legacy serialization",
+      "result": "passed",
+      "evidence": [
+        "transaction-analysis.json",
+        "../fixtures/legacy.json"
+      ]
+    },
+    {
+      "requirement": "Libbitcoin historical root",
+      "result": "passed",
+      "evidence": [
+        "merkle-comparison.json",
+        "libbitcoin.json"
+      ]
+    },
+    {
+      "requirement": "Libbitcoin regtest root",
+      "result": "passed",
+      "evidence": [
+        "lab/block.json",
+        "merkle-comparison.json"
+      ]
+    },
+    {
+      "requirement": "Educational and Bitcoin hashing distinct",
+      "result": "passed",
+      "evidence": [
+        "merkle-comparison.json"
+      ]
+    },
+    {
+      "requirement": "Independent 80 byte header",
+      "result": "passed",
+      "evidence": [
+        "block-analysis.json",
+        "lab/header.hex"
+      ]
+    },
+    {
+      "requirement": "Coinbase and change included in output sum",
+      "result": "passed",
+      "evidence": [
+        "block-analysis.json"
+      ]
+    },
+    {
+      "requirement": "Executed offline and live tests",
+      "result": "passed",
+      "evidence": [
+        "test-results.json"
+      ]
+    },
+    {
+      "requirement": "Fresh run and rerun safety",
+      "result": "passed",
+      "evidence": [
+        "reproduction-check.json"
+      ]
+    },
+    {
+      "requirement": "Preserved v0.1",
+      "result": "passed",
+      "evidence": [
+        "specification.json"
+      ]
+    },
+    {
+      "requirement": "Preserved v0.2",
+      "result": "passed",
+      "evidence": [
+        "specification.json"
+      ]
+    },
+    {
+      "requirement": "Preserved v0.3",
+      "result": "passed",
+      "evidence": [
+        "specification.json"
+      ]
+    },
+    {
+      "requirement": "Assignment Two source preserved",
+      "result": "passed",
+      "evidence": [
+        "test-results.json"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/fixtures/block277316.bin",
+      "result": "passed",
+      "evidence": [
+        "assignment3/fixtures/block277316.bin"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/scripts/audit.py",
+      "result": "passed",
+      "evidence": [
+        "assignment3/scripts/audit.py"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/cpp/CMakeLists.txt",
+      "result": "passed",
+      "evidence": [
+        "assignment3/cpp/CMakeLists.txt"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/cpp/main.cpp",
+      "result": "passed",
+      "evidence": [
+        "assignment3/cpp/main.cpp"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/cpp/merkle.cpp",
+      "result": "passed",
+      "evidence": [
+        "assignment3/cpp/merkle.cpp"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/cpp/merkle.hpp",
+      "result": "passed",
+      "evidence": [
+        "assignment3/cpp/merkle.hpp"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/cpp/merkle_tests.cpp",
+      "result": "passed",
+      "evidence": [
+        "assignment3/cpp/merkle_tests.cpp"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/block-analysis.json",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/block-analysis.json"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/core-installation.json",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/core-installation.json"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/environment.json",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/environment.json"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/historical-block277316.json",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/historical-block277316.json"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/lab/after.json",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/lab/after.json"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/lab/before.json",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/lab/before.json"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/lab/block-txids.txt",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/lab/block-txids.txt"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/lab/block.json",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/lab/block.json"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/lab/funded-balances.json",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/lab/funded-balances.json"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/lab/header.hex",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/lab/header.hex"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/lab/merkleroot.txt",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/lab/merkleroot.txt"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/lab/mined-blocks.json",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/lab/mined-blocks.json"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/lab/output-wallet-info.json",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/lab/output-wallet-info.json"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/lab/previous-transactions.json",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/lab/previous-transactions.json"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/lab/prevouts.json",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/lab/prevouts.json"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/lab/run.json",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/lab/run.json"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/lab/transaction.hex",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/lab/transaction.hex"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/lab/transaction.json",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/lab/transaction.json"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/libbitcoin.json",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/libbitcoin.json"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/merkle-comparison.json",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/merkle-comparison.json"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/node-start.json",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/node-start.json"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/python-client.json",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/python-client.json"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/reproduction-check.json",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/reproduction-check.json"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/rpc-example.json",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/rpc-example.json"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/specification.json",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/specification.json"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/test-results.json",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/test-results.json"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/transaction-analysis.json",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/transaction-analysis.json"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/fixtures/block100000-txids.txt",
+      "result": "passed",
+      "evidence": [
+        "assignment3/fixtures/block100000-txids.txt"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/fixtures/legacy.json",
+      "result": "passed",
+      "evidence": [
+        "assignment3/fixtures/legacy.json"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/python/bitcoin_data.py",
+      "result": "passed",
+      "evidence": [
+        "assignment3/python/bitcoin_data.py"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/python/common.py",
+      "result": "passed",
+      "evidence": [
+        "assignment3/python/common.py"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/python/rpc_block.py",
+      "result": "passed",
+      "evidence": [
+        "assignment3/python/rpc_block.py"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/python/rpc_example.py",
+      "result": "passed",
+      "evidence": [
+        "assignment3/python/rpc_example.py"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/python/rpc_transaction.py",
+      "result": "passed",
+      "evidence": [
+        "assignment3/python/rpc_transaction.py"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/requirements.txt",
+      "result": "passed",
+      "evidence": [
+        "assignment3/requirements.txt"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/scripts/environment.py",
+      "result": "passed",
+      "evidence": [
+        "assignment3/scripts/environment.py"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/scripts/historical.py",
+      "result": "passed",
+      "evidence": [
+        "assignment3/scripts/historical.py"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/scripts/lab.py",
+      "result": "passed",
+      "evidence": [
+        "assignment3/scripts/lab.py"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/scripts/node.py",
+      "result": "passed",
+      "evidence": [
+        "assignment3/scripts/node.py"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/scripts/reproduce.py",
+      "result": "passed",
+      "evidence": [
+        "assignment3/scripts/reproduce.py"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/scripts/run_tests.py",
+      "result": "passed",
+      "evidence": [
+        "assignment3/scripts/run_tests.py"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/scripts/setup.py",
+      "result": "passed",
+      "evidence": [
+        "assignment3/scripts/setup.py"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/shell.nix",
+      "result": "passed",
+      "evidence": [
+        "assignment3/shell.nix"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/tests/test_live.py",
+      "result": "passed",
+      "evidence": [
+        "assignment3/tests/test_live.py"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/tests/test_offline.py",
+      "result": "passed",
+      "evidence": [
+        "assignment3/tests/test_offline.py"
+      ]
+    },
+    {
+      "requirement": "Current live node identity",
+      "result": "passed",
+      "evidence": [
+        "lab/run.json"
+      ]
+    },
+    {
+      "requirement": "P2P disabled",
+      "result": "passed",
+      "evidence": [
+        "node-start.json"
+      ]
+    },
+    {
+      "requirement": "RPC bound to loopback",
+      "result": "passed",
+      "evidence": [
+        "node-start.json"
+      ]
+    }
+  ],
+  "human_review": "Lecturer reviews understanding and grading; no full-consensus claim for Python hash checks"
+}

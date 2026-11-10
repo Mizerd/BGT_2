@@ -1,5 +1,4 @@
 import json
-import os
 from pathlib import Path
 import platform
 import shutil
@@ -34,4 +33,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except (OSError, ValueError, subprocess.SubprocessError) as error:
+        sys.exit("Error: enter the pinned Nix shell first: " + str(error))

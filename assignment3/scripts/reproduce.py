@@ -7,7 +7,7 @@ import uuid
 import hashlib
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "python"))
-from common import ROOT, RPC, load, now, save
+from common import ROOT, load, now, save
 
 
 def main():
@@ -36,13 +36,18 @@ def main():
         transaction = json.loads(run([ROOT / "python/rpc_transaction.py"], env))
         block = json.loads(run([ROOT / "python/rpc_block.py"], env))
         run([ROOT / "scripts/lab.py", "run"], env)
-        tests = run(["-m", "unittest", "discover", "-s", ROOT / "tests", "-p", "test_live.py", "-v"], env)
+        tests = subprocess.run([python, "-m", "unittest", "discover", "-s", str(ROOT / "tests"),
+                                "-p", "test_live.py", "-v"], env=env, capture_output=True, text=True, timeout=180)
+        test_output = tests.stdout + tests.stderr
+        if tests.returncode or "Ran 6 tests" not in test_output or "OK" not in test_output:
+            raise ValueError("Fresh integration tests failed or did not execute all six cases: " + test_output)
         current = load(evidence / "run.json")
         report = {"observed_at": now(), "kind": "second fresh laboratory, actual live RPC",
                   "initial_height": current["initial_height"], "confirmation_height": current["block_height"],
                   "txid": current["txid"], "block_hash": current["block_hash"],
                   "fee_sat": transaction["fee_sat"], "fee_sat_vb": transaction["fee_sat_vb"],
-                  "header_match": block["header"]["hash_match"], "live_tests_exit": 0,
+                  "header_match": block["header"]["hash_match"], "live_tests_exit": tests.returncode,
+                  "live_tests_output": test_output,
                   "data_retained_outside_git": str(data), "reference_fixture_hashes": reference}
     finally:
         run([node, "stop"], env)
