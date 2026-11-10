@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 import sys
 
-from bitcoin_data import bitcoin_merkle, block_output_total
+from bitcoin_data import bitcoin_merkle, block_output_total, verify_header
 from common import DEFAULT_EVIDENCE, RPC, btc, load, now, save
 
 
@@ -18,10 +18,12 @@ def main():
         raise ValueError("The experiment has no confirmed block")
     if args.offline:
         block = load(args.evidence / "block.json")
+        raw_header = (args.evidence / "header.hex").read_text()
     else:
         rpc = RPC()
         rpc.require_regtest()
         block = rpc.call("getblock", state["block_hash"], 2)
+        raw_header = rpc.call("getblockheader", state["block_hash"], False)
     txids = [transaction["txid"] for transaction in block["tx"]]
     if state["txid"] not in txids or block["hash"] != state["block_hash"]:
         raise ValueError("The recorded payment does not belong to this block")
@@ -36,6 +38,7 @@ def main():
               "transaction_count": len(txids), "txids": txids, "coinbase_first": coinbase,
               "merkleroot": root, "node_merkleroot": block["merkleroot"],
               "all_outputs_sat": total, "all_outputs_btc": btc(total)}
+    result["header"] = verify_header(block, raw_header)
     if args.output:
         save(args.output, result)
     print(json.dumps(result, indent=2))

@@ -1,5 +1,5 @@
 {
-  "observed_at": "2026-11-10T07:17:42.341755+00:00",
+  "observed_at": "2026-11-10T07:18:53.849326+00:00",
   "source": "live local Bitcoin Core RPC",
   "hash": "14adc4f7befad3ee4b02a3a9730b026887f3466a8a64340bf1d27e7770e662db",
   "height": 102,
@@ -17,5 +17,16 @@
   "merkleroot": "361ee02fdee8c1c9fbb6ceb14dfac10b8b19a7cd4a03f11fd1706b2aa5574f40",
   "node_merkleroot": "361ee02fdee8c1c9fbb6ceb14dfac10b8b19a7cd4a03f11fd1706b2aa5574f40",
   "all_outputs_sat": 10000000000,
-  "all_outputs_btc": "100.00000000"
+  "all_outputs_btc": "100.00000000",
+  "header": {
+    "bytes": 80,
+    "calculated_hex": "000000205dcac56e37130936307343279b58de87f3e1cb3d308c454c434e1b9993000310404f57a52a6b70d11ff1034acda7198b0bc1fa4db1ceb6fbc9c1e8de2fe01e3661c3f26affff7f2000000000",
+    "node_hex": "000000205dcac56e37130936307343279b58de87f3e1cb3d308c454c434e1b9993000310404f57a52a6b70d11ff1034acda7198b0bc1fa4db1ceb6fbc9c1e8de2fe01e3661c3f26affff7f2000000000",
+    "calculated_hash": "14adc4f7befad3ee4b02a3a9730b026887f3466a8a64340bf1d27e7770e662db",
+    "node_hash": "14adc4f7befad3ee4b02a3a9730b026887f3466a8a64340bf1d27e7770e662db",
+    "modified_nonce_hash": "eb77774b7d9c5d7fc3e983ed06daf89a96720f51468f30c7070233f9f2aa5c9a",
+    "hex_match": true,
+    "hash_match": true,
+    "full_consensus_validation": false
+  }
 }

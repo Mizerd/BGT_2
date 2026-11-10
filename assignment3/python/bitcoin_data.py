@@ -45,6 +45,48 @@ def block_output_total(block):
     return total
 
 
+def header_bytes(block):
+    required = ["version", "merkleroot", "time", "bits", "nonce"]
+    if not isinstance(block, dict) or any(name not in block for name in required):
+        raise ValueError("Missing block header fields")
+    version = block["version"]
+    if isinstance(version, bool) or not isinstance(version, int) or not -(1 << 31) <= version <= 0xffffffff:
+        raise ValueError("Version does not fit the 32-bit field")
+    for name in ["time", "nonce"]:
+        value = block[name]
+        if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= 0xffffffff:
+            raise ValueError(name + " must be an unsigned 32-bit integer")
+    bits = block["bits"]
+    if not isinstance(bits, str) or len(bits) != 8 or any(c not in "0123456789abcdefABCDEF" for c in bits):
+        raise ValueError("bits must contain eight hex digits")
+    previous = block.get("previousblockhash")
+    if previous is None and block.get("height") == 0:
+        previous = "00" * 32
+    header = ((version & 0xffffffff).to_bytes(4, "little") + hash_bytes(previous) +
+              hash_bytes(block["merkleroot"]) + block["time"].to_bytes(4, "little") +
+              int(bits, 16).to_bytes(4, "little") + block["nonce"].to_bytes(4, "little"))
+    if len(header) != 80:
+        raise ValueError("Block header must contain 80 bytes")
+    return header
+
+
+def verify_header(block, raw_header):
+    header = header_bytes(block)
+    if header.hex() != raw_header.strip().lower():
+        raise ValueError("Reconstructed bytes differ from the node raw header")
+    calculated = sha256d(header)[::-1].hex()
+    if calculated != block["hash"]:
+        raise ValueError("Reconstructed block hash differs from RPC")
+    modified = dict(block)
+    modified["nonce"] = (block["nonce"] + 1) & 0xffffffff
+    modified_hash = sha256d(header_bytes(modified))[::-1].hex()
+    if modified_hash == calculated:
+        raise ValueError("Changing nonce did not change the hash")
+    return {"bytes": len(header), "calculated_hex": header.hex(), "node_hex": raw_header.strip().lower(),
+            "calculated_hash": calculated, "node_hash": block["hash"], "modified_nonce_hash": modified_hash,
+            "hex_match": True, "hash_match": True, "full_consensus_validation": False}
+
+
 def transaction_metrics(raw_hex, decoded=None):
     try:
         raw = bytes.fromhex(raw_hex)
