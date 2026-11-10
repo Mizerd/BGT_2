@@ -1,0 +1,14 @@
+{
+  "observed_at": "2026-11-10T07:21:30.034841+00:00",
+  "implementation": "Libbitcoin bitcoin_hash SHA256d, explicit RPC byte reversal",
+  "historical_block": 100000,
+  "historical_source": "supplied eight-page assignment vector; no mainnet RPC queried",
+  "comparison": [
+    "bitcoin_sha256d=f3e94742aca4b5ef85488dc37c06c3282295ffec960994b2c0d5ac2a25a95766",
+    "educational_custom=aef2e8316423fe0ade32b3199ff04637a3702b2928fd5febc852b8e7c9143c81",
+    "different=true"
+  ],
+  "regtest_root": "361ee02fdee8c1c9fbb6ceb14dfac10b8b19a7cd4a03f11fd1706b2aa5574f40",
+  "node_root": "361ee02fdee8c1c9fbb6ceb14dfac10b8b19a7cd4a03f11fd1706b2aa5574f40",
+  "match": true
+}

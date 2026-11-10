@@ -37,3 +37,8 @@ if(Python3_Interpreter_FOUND)
   add_test(NAME cli_checks COMMAND ${Python3_EXECUTABLE}
            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_cli.py $<TARGET_FILE:blockchain>)
 endif()
+
+option(BUILD_ASSIGNMENT3 "Build the separate Libbitcoin SHA256d demonstration" OFF)
+if(BUILD_ASSIGNMENT3)
+  add_subdirectory(assignment3/cpp)
+endif()

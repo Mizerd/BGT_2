@@ -1,0 +1,16 @@
+{
+  "source_repository": "https://github.com/libbitcoin/libbitcoin-system",
+  "source_tag": "v3.6.0",
+  "source_commit": "52f24693f8bdd4c79d66839d90132179f486e7d8",
+  "nixpkgs_commit": "70bdadeb94ffc8806c0570eb5c2695ad29f0e421",
+  "nix_package": "libbitcoin 3.6.0",
+  "pkg_config_name": "libbitcoin",
+  "pkg_config_version": "3.4.0",
+  "version_note": "Upstream v3.6.0 retains 3.4.0 in version.hpp and pkg-config; exact archive and commit are pinned",
+  "patch": "Nixpkgs fix-gcc11-compilation.patch adds <cstddef> to wallet/dictionary.hpp; no hash algorithm changes",
+  "compiler": "GCC 12.2.0, -std=c++20",
+  "boost": "1.75.0",
+  "libsecp256k1": "0.3.2",
+  "build": "nix-shell assignment3/shell.nix; cmake -S . -B assignment3/build -DBUILD_ASSIGNMENT3=ON -DCMAKE_BUILD_TYPE=Release; cmake --build assignment3/build",
+  "runtime_historical_root": "f3e94742aca4b5ef85488dc37c06c3282295ffec960994b2c0d5ac2a25a95766"
+}
