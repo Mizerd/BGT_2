@@ -111,6 +111,7 @@ def payment(rpc, evidence, state):
     (evidence / "transaction.hex").write_text(raw + "\n")
     (evidence / "header.hex").write_text(rpc.call("getblockheader", block_hash, False) + "\n")
     (evidence / "block-txids.txt").write_text("\n".join(transaction["txid"] for transaction in block["tx"]) + "\n")
+    (evidence / "merkleroot.txt").write_text(block["merkleroot"] + "\n")
     state.update(status="confirmed", completed_at=now(), block_height=block["height"])
     save(evidence / "run.json", state)
     return state
