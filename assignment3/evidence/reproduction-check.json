@@ -1,0 +1,30 @@
+{
+  "observed_at": "2026-11-10T07:43:03.827563+00:00",
+  "kind": "second fresh laboratory, actual live RPC",
+  "initial_height": 0,
+  "confirmation_height": 102,
+  "txid": "6e075f79594c9d5beef0437c412cc8a5b3cff5d5b6c9ed7f2daea07367a94de0",
+  "block_hash": "0d07c539925e9d92edbd4547d875d772485f50823ecfcf4e9fc006cf0fd7a3f3",
+  "fee_sat": 282,
+  "fee_sat_vb": "2",
+  "header_match": true,
+  "live_tests_exit": 0,
+  "data_retained_outside_git": "/home/roksme/bitcoin-regtest-mif-reproduction-878248bd8a8e",
+  "reference_fixture_hashes": {
+    "evidence/lab/mined-blocks.json": "2bfd9a108c01970f0254846c6edccc5fd04299b64d1736230142654d2c4666b9",
+    "evidence/lab/funded-balances.json": "4cf0d25334fad655720cf92039ae10145966bc4e5a6c0e05006784e00b9202b3",
+    "evidence/lab/prevouts.json": "cc0c6feffe94fdaf59bad36785c03154b6f52416ecffa514b9fd894021e237fc",
+    "evidence/lab/before.json": "2a11ee39a79a311a42425046109fc2bc3be2d02c2a2cc2ce25f7cff83a53ed5e",
+    "evidence/lab/after.json": "d65f35c86aa0c19c1a136f7a9656ca612437de084d7c506e40207db7e8dcf883",
+    "evidence/lab/transaction.json": "1ba8f54984c196c873a7957436c441a1ab537e2d33efb19ce5c8d72bdd49600c",
+    "evidence/lab/previous-transactions.json": "2b30cb7acf94db5eb074cc95f4bd5f98a43c2e5d8c44f0b1d3598b1a302837cc",
+    "evidence/lab/output-wallet-info.json": "73d788aad444cbdbedf4829e80c5cff5765b8fd8833dcc64d53acd1aa975b5f4",
+    "evidence/lab/block.json": "5bad0f34a46464a648fe603700c7dfc296eeeb9a97e8201dca6209fa9c9c47a9",
+    "evidence/lab/transaction.hex": "c454a391c8c97bc017239133cd0b6c54083fe56969908918afd02013d708d2d1",
+    "evidence/lab/header.hex": "b908d92cca3856803905166b43d4f7578e9b11593c2c296d6593d2931034f856",
+    "evidence/lab/block-txids.txt": "64c7e49c1ce7d5e2287accc84c8043e26633839dd58a91c7727404ebf0e5afb7",
+    "evidence/lab/run.json": "03effa301b0ced141a7655a1d8b6d5fd39f6be9c5fe54ece361eadc9025aadc1",
+    "evidence/lab/merkleroot.txt": "77328075d18d0ab8ddc6f29b8c7cad97f6bc04e8e8492748a984eb9ffd186e48"
+  },
+  "reference_fixtures_unchanged": true
+}

@@ -64,6 +64,14 @@ def main():
     if not core.exists():
         with tarfile.open(downloads / ARCHIVE) as archive:
             archive.extractall(DEPS, filter="data")
+    binary_hashes = {}
+    with tarfile.open(downloads / ARCHIVE) as archive:
+        for name in ["bitcoind", "bitcoin-cli"]:
+            original = archive.extractfile(f"bitcoin-{VERSION}/bin/{name}").read()
+            installed = (core / "bin" / name).read_bytes()
+            if original != installed:
+                raise RuntimeError("Installed Core binary differs from the verified archive: " + name)
+            binary_hashes[name] = hashlib.sha256(installed).hexdigest()
     loader = []
     if Path("/etc/NIXOS").exists():
         for candidate in sorted(Path("/nix/store").glob("*glibc-*/lib/ld-linux-x86-64.so.2")):
@@ -92,7 +100,7 @@ def main():
                 "archive": ARCHIVE, "sha256": actual, "source": "https://bitcoincore.org/en/download/",
                 "key_source_commit": KEYS_COMMIT, "required_fingerprint": FINGERPRINT,
                 "valid_signatures": signatures, "gpg_exit": verification.returncode,
-                "versions": versions, "binary_modified": False, "nix_loader": loader,
+                "versions": versions, "binary_modified": False, "binary_sha256": binary_hashes, "nix_loader": loader,
                 "python": sys.version, "packages": run([str(venv / "bin/python"), "-m", "pip", "freeze"])}
     report = ROOT / ".runtime/core-installation.json"
     report.parent.mkdir(parents=True, exist_ok=True)
