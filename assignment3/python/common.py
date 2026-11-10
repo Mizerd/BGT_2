@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 import json
 import os
 from pathlib import Path
@@ -32,7 +32,10 @@ def load(path):
 def satoshi(value):
     if isinstance(value, (float, bool)):
         raise ValueError("Money must be Decimal, integer or decimal text, not float")
-    amount = Decimal(value) * SATOSHIS
+    try:
+        amount = Decimal(value) * SATOSHIS
+    except (InvalidOperation, TypeError, ValueError) as error:
+        raise ValueError("Invalid decimal BTC amount") from error
     if not amount.is_finite() or amount < 0 or amount != amount.to_integral_value():
         raise ValueError("Invalid BTC amount or fractional satoshi")
     return int(amount)
@@ -73,6 +76,8 @@ class RPC:
             raise RPCError(f"RPC {method}: {result.stderr.strip()}")
         text = result.stdout.strip()
         if method in {"getnewaddress", "sendtoaddress", "getblockhash", "getbestblockhash"}:
+            return text
+        if method in {"getrawtransaction", "getblockheader"} and not text.startswith("{"):
             return text
         try:
             return json.loads(text, parse_float=Decimal)
