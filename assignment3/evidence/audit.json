@@ -1,5 +1,5 @@
 {
-  "observed_at": "2026-11-10T08:03:00.582392+00:00",
+  "observed_at": "2026-11-10T08:37:25.145985+00:00",
   "kind": "executed evidence audit against PDF requirements",
   "live_requested": true,
   "all_passed": true,
@@ -160,17 +160,38 @@
       ]
     },
     {
-      "requirement": "Safe tracked path assignment3/fixtures/block277316.bin",
+      "requirement": "Safe tracked path assignment3/README.md",
       "result": "passed",
       "evidence": [
-        "assignment3/fixtures/block277316.bin"
+        "assignment3/README.md"
       ]
     },
     {
-      "requirement": "Safe tracked path assignment3/scripts/audit.py",
+      "requirement": "Safe tracked path assignment3/evidence/assignment2-regression.json",
       "result": "passed",
       "evidence": [
-        "assignment3/scripts/audit.py"
+        "assignment3/evidence/assignment2-regression.json"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/node-stopped.json",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/node-stopped.json"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/tests-node-stopped.json",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/tests-node-stopped.json"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/scripts/demo.sh",
+      "result": "passed",
+      "evidence": [
+        "assignment3/scripts/demo.sh"
       ]
     },
     {
@@ -206,6 +227,13 @@
       "result": "passed",
       "evidence": [
         "assignment3/cpp/merkle_tests.cpp"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/evidence/audit.json",
+      "result": "passed",
+      "evidence": [
+        "assignment3/evidence/audit.json"
       ]
     },
     {
@@ -405,6 +433,13 @@
       ]
     },
     {
+      "requirement": "Safe tracked path assignment3/fixtures/block277316.bin",
+      "result": "passed",
+      "evidence": [
+        "assignment3/fixtures/block277316.bin"
+      ]
+    },
+    {
       "requirement": "Safe tracked path assignment3/fixtures/legacy.json",
       "result": "passed",
       "evidence": [
@@ -451,6 +486,13 @@
       "result": "passed",
       "evidence": [
         "assignment3/requirements.txt"
+      ]
+    },
+    {
+      "requirement": "Safe tracked path assignment3/scripts/audit.py",
+      "result": "passed",
+      "evidence": [
+        "assignment3/scripts/audit.py"
       ]
     },
     {

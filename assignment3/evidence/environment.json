@@ -1,11 +1,13 @@
 {
-  "observed_at": "2026-11-10T07:42:57.006829+00:00",
+  "observed_at": "2026-11-10T08:19:56.764949+00:00",
   "os_release": "ANSI_COLOR=\"0;38;2;126;186;228\"\nBUG_REPORT_URL=\"https://github.com/NixOS/nixpkgs/issues\"\nBUILD_ID=\"26.05.8045.b18a4b905f8d\"\nCPE_NAME=\"cpe:/o:nixos:nixos:26.05\"\nDEFAULT_HOSTNAME=nixos\nDOCUMENTATION_URL=\"https://nixos.org/learn.html\"\nHOME_URL=\"https://nixos.org/\"\nID=nixos\nID_LIKE=\"\"\nIMAGE_ID=\"\"\nIMAGE_VERSION=\"\"\nLOGO=\"nix-snowflake\"\nNAME=NixOS\nPRETTY_NAME=\"NixOS 26.05 (Yarara)\"\nSUPPORT_END=\"2026-12-31\"\nSUPPORT_URL=\"https://nixos.org/community.html\"\nVARIANT=\"\"\nVARIANT_ID=\"\"\nVENDOR_NAME=NixOS\nVENDOR_URL=\"https://nixos.org/\"\nVERSION=\"26.05 (Yarara)\"\nVERSION_CODENAME=yarara\nVERSION_ID=\"26.05\"\n",
   "architecture": "x86_64",
   "python": "3.13.15 (main, Aug  5 2026, 12:25:43) [GCC 15.2.0]",
   "compiler": "g++ (GCC) 12.2.0",
   "cmake": "cmake version 3.25.3",
   "git": "git version 2.54.0",
+  "nix": "nix (Nix) 2.34.8",
+  "gpg": "gpg (GnuPG) 2.4.9",
   "pkg_config": "0.29.2",
   "libbitcoin_pkg_config": "3.4.0",
   "libbitcoin_flags": "-I/nix/store/5g7ik2kryrmcp4pa9vld18rm3wh7nq18-libbitcoin-3.6.0/include -I/nix/store/lr7z1ryldafbvmyl8w0asgg5r3wmidln-boost-1.75.0-dev/include -I/nix/store/lvfvlasckhi2646260xv9z6xzfvxlwdy-secp256k1-0.3.2/include -L/nix/store/5g7ik2kryrmcp4pa9vld18rm3wh7nq18-libbitcoin-3.6.0/lib -L/nix/store/ly37p2yg52anlpwmmdq395sgsqlpx7c3-boost-1.75.0/lib -L/nix/store/lvfvlasckhi2646260xv9z6xzfvxlwdy-secp256k1-0.3.2/lib -lbitcoin -lboost_chrono -lboost_date_time -lboost_filesystem -lboost_iostreams -lboost_locale -lboost_log -lboost_program_options -lboost_regex -lboost_system -lboost_thread -lpthread -lrt -ldl -lsecp256k1",
@@ -13,7 +15,7 @@
   "bitcoind": "Bitcoin Core daemon version v32.1.0 bitcoind",
   "bitcoin_cli": "Bitcoin Core RPC client version v32.1.0",
   "python_packages": "python-bitcoinlib==0.12.2",
-  "disk_free_bytes": 855780896768,
+  "disk_free_bytes": 855705489408,
   "memory_total_kib": 32162888,
-  "memory_available_kib": 25430224
+  "memory_available_kib": 23826428
 }

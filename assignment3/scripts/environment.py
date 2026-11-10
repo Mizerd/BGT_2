@@ -20,6 +20,7 @@ def main():
               "architecture": platform.machine(), "python": sys.version,
               "compiler": command("c++", "--version").splitlines()[0],
               "cmake": command("cmake", "--version").splitlines()[0], "git": command("git", "--version"),
+              "nix": command("nix", "--version"), "gpg": command("gpg", "--version").splitlines()[0],
               "pkg_config": command("pkg-config", "--version"),
               "libbitcoin_pkg_config": command("pkg-config", "--modversion", "libbitcoin"),
               "libbitcoin_flags": command("pkg-config", "--cflags", "--libs", "libbitcoin"),

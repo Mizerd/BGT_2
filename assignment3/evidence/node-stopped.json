@@ -1,0 +1,10 @@
+{
+  "observed_at": "2026-11-10T08:32:39.847529+00:00",
+  "rpc_unavailable": true,
+  "project_pid_file_absent": true,
+  "data_retained": true,
+  "wallets_retained": [
+    "MIF",
+    "student"
+  ]
+}

@@ -10,8 +10,9 @@ from common import ROOT, now, save
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--live", action="store_true")
-    parser.add_argument("--output", type=Path, default=ROOT / ".runtime/test-results.json")
+    parser.add_argument("--output", type=Path)
     args = parser.parse_args()
+    destination = args.output or ROOT / ".runtime" / ("test-results-live.json" if args.live else "test-results-offline.json")
     build = ROOT / "build"
     project = ROOT.parent
     python = ROOT / ".venv/bin/python"
@@ -32,12 +33,12 @@ def main():
         result = subprocess.run(command, capture_output=True, text=True, timeout=180)
         output = result.stdout + result.stderr
         report["results"].append({"command": command, "exit": result.returncode, "output": output})
-        save(args.output, report)
+        save(destination, report)
         print(output, end="")
         if result.returncode or "skipped=" in output or "***Skipped" in output:
             raise RuntimeError("A test command failed or skipped tests")
     report["all_passed"] = True
-    save(args.output, report)
+    save(destination, report)
 
 
 if __name__ == "__main__":

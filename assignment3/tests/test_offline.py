@@ -210,6 +210,9 @@ class OfflineTests(unittest.TestCase):
         with patch("common.subprocess.run", side_effect=subprocess.TimeoutExpired("cli", 1)):
             with self.assertRaisesRegex(RPCError, "timed out"):
                 RPC().call("getblockchaininfo")
+        with patch("common.subprocess.run", return_value=subprocess.CompletedProcess([], 1, "", "No authentication cookie")):
+            with self.assertRaisesRegex(RPCError, "authentication"):
+                RPC().call("getblockchaininfo")
 
     def test_wrong_rpc_network(self):
         reply = subprocess.CompletedProcess([], 0, '{"chain":"main"}', "")
@@ -224,9 +227,6 @@ class OfflineTests(unittest.TestCase):
         reference = load(ROOT / "evidence/historical-block277316.json")
         self.assertEqual(sha256d(raw[:80])[::-1].hex(), reference["hash"])
         self.assertEqual(sum(output.nValue for tx in block.vtx for output in tx.vout), 1032207722534)
-        with patch("common.subprocess.run", return_value=subprocess.CompletedProcess([], 1, "", "No authentication cookie")):
-            with self.assertRaisesRegex(RPCError, "authentication"):
-                RPC().call("getblockchaininfo")
 
     def test_rpc_decimal_parsing(self):
         result = subprocess.CompletedProcess([], 0, '{"amount":0.00000001}', "")

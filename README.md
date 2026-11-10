@@ -1,5 +1,7 @@
 # BGT 2 užduotis: blokų grandinės simuliacija · v0.3
 
+**3-ioji papildoma užduotis:** [Bitcoin duomenų analizė](assignment3/README.md) – Libbitcoin, tikras regtest mazgas ir Python RPC. Darbas pateiktas atskiroje `assignment-3` šakoje.
+
 ## 1. Projektas
 
 Mokomoji blokų grandinės simuliacija, parašyta C++20. Programa generuoja vartotojus
