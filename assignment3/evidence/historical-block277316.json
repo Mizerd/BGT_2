@@ -1,0 +1,14 @@
+{
+  "observed_at": "2026-11-10T07:39:27.640320+00:00",
+  "kind": "historical public HTTP data, not mainnet RPC",
+  "height": 277316,
+  "hash": "0000000000000001b6b9a13b095e96db41c4a928b97ef2d944a9b31b2cc7bdc4",
+  "source": "https://blockstream.info/api/block/0000000000000001b6b9a13b095e96db41c4a928b97ef2d944a9b31b2cc7bdc4/raw",
+  "raw_bytes": 218629,
+  "transactions": 419,
+  "all_outputs_sat": 1032207722534,
+  "all_outputs_btc": "10322.07722534",
+  "header_hash_verified": true,
+  "merkle_verified": true,
+  "reference_output_sum_matches": true
+}
