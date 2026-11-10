@@ -11,6 +11,40 @@ def sha256d(data):
     return hashlib.sha256(hashlib.sha256(data).digest()).digest()
 
 
+def hash_bytes(value):
+    if not isinstance(value, str) or len(value) != 64:
+        raise ValueError("Hash must contain exactly 64 hex characters")
+    try:
+        raw = bytes.fromhex(value)
+    except ValueError as error:
+        raise ValueError("Invalid hash hex") from error
+    if len(raw) != 32:
+        raise ValueError("Hash must decode to 32 bytes")
+    return raw[::-1]
+
+
+def bitcoin_merkle(txids):
+    if not txids:
+        raise ValueError("Bitcoin Merkle tree cannot be empty")
+    level = [hash_bytes(txid) for txid in txids]
+    while len(level) > 1:
+        if len(level) % 2:
+            level.append(level[-1])
+        level = [sha256d(level[index] + level[index + 1]) for index in range(0, len(level), 2)]
+    return level[0][::-1].hex()
+
+
+def block_output_total(block):
+    if not isinstance(block, dict) or not isinstance(block.get("tx"), list) or not block["tx"]:
+        raise ValueError("Block must contain decoded transactions")
+    total = 0
+    for transaction in block["tx"]:
+        if not isinstance(transaction, dict) or not isinstance(transaction.get("vout"), list):
+            raise ValueError("Use getblock verbosity 2 with decoded outputs")
+        total += sum(satoshi(output["value"]) for output in transaction["vout"])
+    return total
+
+
 def transaction_metrics(raw_hex, decoded=None):
     try:
         raw = bytes.fromhex(raw_hex)

@@ -1,0 +1,21 @@
+{
+  "observed_at": "2026-11-10T07:17:42.341755+00:00",
+  "source": "live local Bitcoin Core RPC",
+  "hash": "14adc4f7befad3ee4b02a3a9730b026887f3466a8a64340bf1d27e7770e662db",
+  "height": 102,
+  "previousblockhash": "10030093991b4e434c458c303dcbe1f387de589b27437330360913376ec5ca5d",
+  "time": 1794294625,
+  "version": 536870912,
+  "bits": "207fffff",
+  "nonce": 0,
+  "transaction_count": 2,
+  "txids": [
+    "b140e1fa3db85529c95c2a7a6f7500d32f2593659a42d47cdc5f8da2eb5b6d8a",
+    "da3ff5265282fad130d2f9b9ed535511366626ca3214f0602d36c503046b495a"
+  ],
+  "coinbase_first": true,
+  "merkleroot": "361ee02fdee8c1c9fbb6ceb14dfac10b8b19a7cd4a03f11fd1706b2aa5574f40",
+  "node_merkleroot": "361ee02fdee8c1c9fbb6ceb14dfac10b8b19a7cd4a03f11fd1706b2aa5574f40",
+  "all_outputs_sat": 10000000000,
+  "all_outputs_btc": "100.00000000"
+}
