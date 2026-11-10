@@ -1,2 +1,8 @@
 /build/
 *.log
+/assignment3/.deps/
+/assignment3/.venv/
+/assignment3/.runtime/
+/assignment3/build/
+__pycache__/
+.cookie

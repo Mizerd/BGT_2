@@ -1,0 +1,12 @@
+{
+  "source": "3 darbas - Bitcoin duomenu analize - LT (2026).pdf",
+  "pages": 8,
+  "sha256": "a4b36d3bd5291eb73e514533abddc083fbd896ae76a67ada56bf2156c04c438b",
+  "read_on": "2026-11-10",
+  "parts": ["Libbitcoin Merkle", "Bitcoin Core regtest", "Python RPC analysis"],
+  "preserved_tags": {
+    "v0.1": "90b7402507bebd405acd1dea847e95f18a7e98e2",
+    "v0.2": "4e390257f1b1bcf4d87050ecfa6283d3e83d67a9",
+    "v0.3": "0626b9ef27a5f7389dff313161338dad80e5d581"
+  }
+}

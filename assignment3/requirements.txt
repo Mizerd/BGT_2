@@ -1,0 +1,1 @@
+python-bitcoinlib==0.12.2 --hash=sha256:2f29a9f475f21c12169b3a6cc8820f34f11362d7ff1200a5703dce3e4e903a44
