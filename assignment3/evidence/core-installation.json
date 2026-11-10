@@ -1,0 +1,28 @@
+{
+  "archive": "bitcoin-32.1-x86_64-linux-gnu.tar.gz",
+  "sha256": "61545c17c3120fb7412f896d248b11993af04ec8817aad3649c55b2afb044963",
+  "source": "https://bitcoincore.org/en/download/",
+  "key_source_commit": "f432c43b5fbd6b8355daf36127acb7a73d0308b7",
+  "required_fingerprint": "E777299FC265DD04793070EB944D35F9AC3DB76A",
+  "valid_signatures": [
+    "[GNUPG:] VALIDSIG 152812300785C96444D3334D17565732E08E5E41 2026-10-27 1793106587 0 4 0 1 8 00 152812300785C96444D3334D17565732E08E5E41",
+    "[GNUPG:] VALIDSIG 0AD83877C1F0CD1EE9BD660AD7CC770B81FD22A8 2026-10-27 1793108555 0 4 0 1 8 00 0AD83877C1F0CD1EE9BD660AD7CC770B81FD22A8",
+    "[GNUPG:] VALIDSIG CFB16E21C950F67FA95E558F2EEB9F5CC09526C1 2026-10-27 1793109535 0 4 0 1 8 00 E777299FC265DD04793070EB944D35F9AC3DB76A",
+    "[GNUPG:] VALIDSIG F4FC70F07310028424EFC20A8E4256593F177720 2026-10-27 1793110296 0 4 0 1 8 00 F4FC70F07310028424EFC20A8E4256593F177720",
+    "[GNUPG:] VALIDSIG E61773CD6E01040E2F1BD78CE7E2984B6289C93A 2026-10-27 1793109223 0 4 0 1 8 00 E61773CD6E01040E2F1BD78CE7E2984B6289C93A",
+    "[GNUPG:] VALIDSIG F2CFC4ABD0B99D837EEBB7D09B79B45691DB4173 2026-10-27 1793115279 0 4 0 1 8 00 A8FC55F3B04BA3146F3492E79303B33A305224CB",
+    "[GNUPG:] VALIDSIG ED9BDF7AD6A55E232E84524257FF9BDBCC301009 2026-10-27 1793105744 0 4 0 1 8 00 ED9BDF7AD6A55E232E84524257FF9BDBCC301009",
+    "[GNUPG:] VALIDSIG A0083660F235A27000CD3C81CE6EC49945C17EA6 2026-10-27 1793105608 0 4 0 1 8 00 67AA5B46E7AF78053167FE343B8F814A784218F8"
+  ],
+  "gpg_exit": 0,
+  "versions": {
+    "bitcoind": "Bitcoin Core daemon version v32.1.0 bitcoind\nCopyright (C) 2009-2026 The Bitcoin Core developers\n\nPlease contribute if you find Bitcoin Core useful. Visit\n<https://bitcoincore.org/> for further information about the software.\nThe source code is available from <https://github.com/bitcoin/bitcoin>.\n\nThis is experimental software.\nDistributed under the MIT software license, see the accompanying file COPYING\nor <https://opensource.org/license/MIT>",
+    "bitcoin-cli": "Bitcoin Core RPC client version v32.1.0\nCopyright (C) 2009-2026 The Bitcoin Core developers\n\nPlease contribute if you find Bitcoin Core useful. Visit\n<https://bitcoincore.org/> for further information about the software.\nThe source code is available from <https://github.com/bitcoin/bitcoin>.\n\nThis is experimental software.\nDistributed under the MIT software license, see the accompanying file COPYING\nor <https://opensource.org/license/MIT>"
+  },
+  "binary_modified": false,
+  "nix_loader": [
+    "/nix/store/0d8g8n0a11v6f5m2h416ajyxmnkwc3md-glibc-2.42-67/lib/ld-linux-x86-64.so.2"
+  ],
+  "python": "3.13.15 (main, Aug  5 2026, 12:25:43) [GCC 15.2.0]",
+  "packages": "python-bitcoinlib==0.12.2"
+}
