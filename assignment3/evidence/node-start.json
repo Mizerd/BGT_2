@@ -1,0 +1,96 @@
+{
+  "observed_at": "2026-11-10T07:06:21.270455+00:00",
+  "lab_id": "29a3dc50-057e-4f6b-a166-4852957fa683",
+  "blockchain": {
+    "chain": "regtest",
+    "blocks": 0,
+    "headers": 0,
+    "bestblockhash": "0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206",
+    "bits": "207fffff",
+    "target": "7fffff0000000000000000000000000000000000000000000000000000000000",
+    "difficulty": "4.656542373906925E-10",
+    "time": 1296688602,
+    "mediantime": 1296688602,
+    "verificationprogress": "0.000002009618924423857",
+    "initialblockdownload": true,
+    "chainwork": "0000000000000000000000000000000000000000000000000000000000000002",
+    "size_on_disk": 293,
+    "pruned": false,
+    "warnings": []
+  },
+  "network": {
+    "version": 320100,
+    "subversion": "/Satoshi:32.1.0/",
+    "protocolversion": 70017,
+    "localservices": "0000000000000c09",
+    "localservicesnames": [
+      "NETWORK",
+      "WITNESS",
+      "NETWORK_LIMITED",
+      "P2P_V2"
+    ],
+    "localrelay": true,
+    "timeoffset": 0,
+    "tx_send_rate": 14,
+    "inv_buckets": {
+      "inbound": {
+        "backlog": 0,
+        "count_tok": 420,
+        "size_tok": 12000000
+      },
+      "outbound": {
+        "backlog": 0,
+        "count_tok": 420,
+        "size_tok": 12000000
+      }
+    },
+    "networkactive": false,
+    "connections": 0,
+    "connections_in": 0,
+    "connections_out": 0,
+    "networks": [
+      {
+        "name": "ipv4",
+        "limited": false,
+        "reachable": true,
+        "proxy": "",
+        "proxy_randomize_credentials": false
+      },
+      {
+        "name": "ipv6",
+        "limited": false,
+        "reachable": true,
+        "proxy": "",
+        "proxy_randomize_credentials": false
+      },
+      {
+        "name": "onion",
+        "limited": true,
+        "reachable": false,
+        "proxy": "",
+        "proxy_randomize_credentials": false
+      },
+      {
+        "name": "i2p",
+        "limited": true,
+        "reachable": false,
+        "proxy": "",
+        "proxy_randomize_credentials": false
+      },
+      {
+        "name": "cjdns",
+        "limited": true,
+        "reachable": false,
+        "proxy": "",
+        "proxy_randomize_credentials": false
+      }
+    ],
+    "relayfee": "0.00000100",
+    "incrementalfee": "0.00000100",
+    "localaddresses": [],
+    "warnings": []
+  },
+  "connections": 0,
+  "rpc_port": 18443,
+  "p2p_listening": false
+}
