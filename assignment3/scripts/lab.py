@@ -127,7 +127,7 @@ def main():
     if args.action == "run":
         state = payment(rpc, args.evidence, state)
         print("Payment:", state["txid"], "block:", state["block_hash"])
-    print("Wallets ready; experiment status:", state["status"], "height:", state["funded_height"])
+    print("Wallets ready; experiment status:", state["status"], "funded height:", state["funded_height"])
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 {
+  "verified_at": "2026-11-10T07:31:56.825453+00:00",
   "archive": "bitcoin-32.1-x86_64-linux-gnu.tar.gz",
   "sha256": "61545c17c3120fb7412f896d248b11993af04ec8817aad3649c55b2afb044963",
   "source": "https://bitcoincore.org/en/download/",

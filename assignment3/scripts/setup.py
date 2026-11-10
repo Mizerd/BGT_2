@@ -1,4 +1,5 @@
 import hashlib
+from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
@@ -87,12 +88,15 @@ def main():
         run([sys.executable, "-m", "venv", str(venv)])
     run([str(venv / "bin/python"), "-m", "pip", "install", "--require-hashes", "--only-binary=:all:",
          "-r", str(ROOT / "requirements.txt")])
-    evidence = {"archive": ARCHIVE, "sha256": actual, "source": "https://bitcoincore.org/en/download/",
+    evidence = {"verified_at": datetime.now(timezone.utc).isoformat(),
+                "archive": ARCHIVE, "sha256": actual, "source": "https://bitcoincore.org/en/download/",
                 "key_source_commit": KEYS_COMMIT, "required_fingerprint": FINGERPRINT,
                 "valid_signatures": signatures, "gpg_exit": verification.returncode,
                 "versions": versions, "binary_modified": False, "nix_loader": loader,
                 "python": sys.version, "packages": run([str(venv / "bin/python"), "-m", "pip", "freeze"])}
-    (ROOT / "evidence/core-installation.json").write_text(json.dumps(evidence, indent=2) + "\n")
+    report = ROOT / ".runtime/core-installation.json"
+    report.parent.mkdir(parents=True, exist_ok=True)
+    report.write_text(json.dumps(evidence, indent=2) + "\n")
     print("Verified official Core", VERSION, "with", len(signatures), "signatures; Python environment ready")
 
 

@@ -6,7 +6,7 @@ from pathlib import Path
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_EVIDENCE = ROOT / "evidence/lab"
+DEFAULT_EVIDENCE = Path(os.environ.get("BGT3_EVIDENCE", ROOT / ".runtime/lab")).resolve()
 SATOSHIS = 100000000
 
 

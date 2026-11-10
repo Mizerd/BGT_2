@@ -237,6 +237,18 @@ class OfflineTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("not a project-owned", result.stderr)
 
+    def test_unowned_directory_is_not_reset(self):
+        with tempfile.TemporaryDirectory() as directory:
+            sentinel = Path(directory) / "wallet.dat"
+            sentinel.write_text("unrelated test data")
+            env = dict(os.environ, BGT3_DATADIR=directory)
+            result = subprocess.run([sys.executable, str(ROOT / "scripts/node.py"), "start"], env=env,
+                                    capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("unowned directory", result.stderr)
+            self.assertEqual(sentinel.read_text(), "unrelated test data")
+            self.assertFalse((Path(directory) / ".bgt3-owner.json").exists())
+
 
 if __name__ == "__main__":
     unittest.main()

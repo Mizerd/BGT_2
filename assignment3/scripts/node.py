@@ -60,7 +60,7 @@ def main():
                    "network": network, "connections": rpc.call("getconnectioncount"),
                    "rpc_port": rpc.port, "p2p_listening": False}
     if args.action == "start":
-        save(ROOT / "evidence/node-start.json", observation)
+        save(ROOT / ".runtime/node-observation.json", observation)
     print(json.dumps(observation, indent=2, default=str))
 
 
