@@ -1,0 +1,10 @@
+{
+  "lab_id": "29a3dc50-057e-4f6b-a166-4852957fa683",
+  "started_at": "2026-11-10T07:08:14.765605+00:00",
+  "chain": "regtest",
+  "initial_height": 0,
+  "status": "funded",
+  "mining_address": "bcrt1q22rldx7x63g880htcg22lk9tnve2tzug3vc7jj",
+  "recipient": "bcrt1qtdka436qprkgm55p6hx0qda696dp2h8gu7y0c3",
+  "funded_height": 101
+}

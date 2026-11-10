@@ -1,0 +1,30 @@
+{
+  "observed_at": "2026-11-10T07:08:17.124700+00:00",
+  "height": 101,
+  "wallets": {
+    "MIF": {
+      "mine": {
+        "trusted": "50.00000000",
+        "untrusted_pending": "0E-8",
+        "immature": "5000.00000000",
+        "nonmempool": "0E-8"
+      },
+      "lastprocessedblock": {
+        "hash": "10030093991b4e434c458c303dcbe1f387de589b27437330360913376ec5ca5d",
+        "height": 101
+      }
+    },
+    "student": {
+      "mine": {
+        "trusted": "0E-8",
+        "untrusted_pending": "0E-8",
+        "immature": "0E-8",
+        "nonmempool": "0E-8"
+      },
+      "lastprocessedblock": {
+        "hash": "10030093991b4e434c458c303dcbe1f387de589b27437330360913376ec5ca5d",
+        "height": 101
+      }
+    }
+  }
+}
