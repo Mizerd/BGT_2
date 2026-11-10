@@ -1,0 +1,56 @@
+{
+  "txid": "da3ff5265282fad130d2f9b9ed535511366626ca3214f0602d36c503046b495a",
+  "coinbase": false,
+  "vin": [
+    {
+      "txid": "4e55e9d090a7128ba84e549687de7818b9ad0eaf9207ce92c83517d6c633fa96",
+      "vout": 0,
+      "scriptSig": {
+        "asm": "",
+        "hex": ""
+      },
+      "txinwitness": [
+        "304402203e143f59cdd6cbec03aaa30e0ff0f7244805ee878f5bbdd9837131364f8f3256022044d480331e84c72cd95e58c1d400a4f0e31bd83110c858fd2264bb6508fc5b3a01",
+        "031f812c693b2c2d2f7e226152df22d00f59a243d0a6dbb04539b30945bb2225e5"
+      ],
+      "previous_value_sat": 5000000000,
+      "previous_value_btc": "50.00000000",
+      "previous_scriptPubKey": {
+        "asm": "0 5287f69bc6d45073beebc214afd8ab9b32a58b88",
+        "desc": "addr(bcrt1q22rldx7x63g880htcg22lk9tnve2tzug3vc7jj)#j8j7az8v",
+        "hex": "00145287f69bc6d45073beebc214afd8ab9b32a58b88",
+        "address": "bcrt1q22rldx7x63g880htcg22lk9tnve2tzug3vc7jj",
+        "type": "witness_v0_keyhash"
+      },
+      "source": "previous decoded transaction; cross-checked with saved UTXO when present"
+    }
+  ],
+  "vout": [
+    {
+      "n": 0,
+      "value_sat": 4899999718,
+      "value_btc": "48.99999718",
+      "script_type": "witness_v0_keyhash",
+      "script_hex": "001489ad4df5c0236b89460edb52663d372b8d1106ba",
+      "address": "bcrt1q3xk5mawqyd4cj3swmdfxv0fh9wx3zp46fm76qp",
+      "role": "change (sender wallet evidence)"
+    },
+    {
+      "n": 1,
+      "value_sat": 100000000,
+      "value_btc": "1.00000000",
+      "script_type": "witness_v0_keyhash",
+      "script_hex": "00145b6ddac74008ec8dd281d5ccf037ba2e9a155ce8",
+      "address": "bcrt1qtdka436qprkgm55p6hx0qda696dp2h8gu7y0c3",
+      "role": "recipient"
+    }
+  ],
+  "input_total_sat": 5000000000,
+  "output_total_sat": 4999999718,
+  "fee_sat": 282,
+  "fee_btc": "0.00000282",
+  "fee_sat_vb": "2",
+  "sender_wallet_fee_abs_sat": 282,
+  "observed_at": "2026-11-10T07:14:55.453671+00:00",
+  "source": "live local Bitcoin Core RPC"
+}
