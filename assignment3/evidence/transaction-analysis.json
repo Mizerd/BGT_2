@@ -51,6 +51,43 @@
   "fee_btc": "0.00000282",
   "fee_sat_vb": "2",
   "sender_wallet_fee_abs_sat": 282,
-  "observed_at": "2026-11-10T07:14:55.453671+00:00",
+  "serialization": {
+    "txid": "da3ff5265282fad130d2f9b9ed535511366626ca3214f0602d36c503046b495a",
+    "wtxid": "830ef29c2d0de224e26d614406c764c1c1e25f6d633fac1a5e54eb7561c8b8c7",
+    "size": 222,
+    "base_size": 113,
+    "weight": 561,
+    "vsize": 141,
+    "has_witness": true,
+    "vin_scripts": [
+      {
+        "scriptSig": {
+          "hex": ""
+        },
+        "txinwitness": [
+          "304402203e143f59cdd6cbec03aaa30e0ff0f7244805ee878f5bbdd9837131364f8f3256022044d480331e84c72cd95e58c1d400a4f0e31bd83110c858fd2264bb6508fc5b3a01",
+          "031f812c693b2c2d2f7e226152df22d00f59a243d0a6dbb04539b30945bb2225e5"
+        ]
+      }
+    ]
+  },
+  "legacy_comparison": {
+    "txid": "fff2525b8931402dd09222c50775608f75787bd2b87e56995a7bdd30f79702c4",
+    "wtxid": "fff2525b8931402dd09222c50775608f75787bd2b87e56995a7bdd30f79702c4",
+    "size": 259,
+    "base_size": 259,
+    "weight": 1036,
+    "vsize": 259,
+    "has_witness": false,
+    "vin_scripts": [
+      {
+        "scriptSig": {
+          "hex": "493046022100c352d3dd993a981beba4a63ad15c209275ca9470abfcd57da93b58e4eb5dce82022100840792bc1f456062819f15d33ee7055cf7b5ee1af1ebcc6028d9cdb1c3af7748014104f46db5e9d61a9dc27b8d64ad23e7383a4e6ca164593c2527c038c0857eb67ee8e825dca65046b82c9331586c82e0fd1f633f25f87c161bc6f8a630121df2b3d3"
+        },
+        "txinwitness": []
+      }
+    ]
+  },
+  "observed_at": "2026-11-10T07:16:05.854546+00:00",
   "source": "live local Bitcoin Core RPC"
 }

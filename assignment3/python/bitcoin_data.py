@@ -1,6 +1,44 @@
 from decimal import Decimal
+import hashlib
+
+from bitcoin.core import CTransaction, b2lx
+from bitcoin.core.serialize import SerializationError
 
 from common import btc, satoshi
+
+
+def sha256d(data):
+    return hashlib.sha256(hashlib.sha256(data).digest()).digest()
+
+
+def transaction_metrics(raw_hex, decoded=None):
+    try:
+        raw = bytes.fromhex(raw_hex)
+        transaction = CTransaction.deserialize(raw)
+    except (ValueError, SerializationError) as error:
+        raise ValueError("Invalid raw transaction serialization") from error
+    base = transaction.serialize({"include_witness": False})
+    weight = 3 * len(base) + len(raw)
+    txid = sha256d(base)[::-1].hex()
+    wtxid = sha256d(raw)[::-1].hex()
+    if b2lx(transaction.GetTxid()) != txid or b2lx(transaction.GetHash()) != wtxid or transaction.calc_weight() != weight:
+        raise ValueError("Library and independent transaction measurements disagree")
+    result = {"txid": txid, "wtxid": wtxid, "size": len(raw), "base_size": len(base),
+              "weight": weight, "vsize": (weight + 3) // 4, "has_witness": not transaction.wit.is_null()}
+    scripts = []
+    for index, item in enumerate(transaction.vin):
+        witness = []
+        if index < len(transaction.wit.vtxinwit):
+            witness = [value.hex() for value in transaction.wit.vtxinwit[index].scriptWitness.stack]
+        scripts.append({"scriptSig": {"hex": bytes(item.scriptSig).hex()}, "txinwitness": witness})
+    result["vin_scripts"] = scripts
+    if decoded is not None:
+        for name in ["txid", "size", "weight", "vsize"]:
+            if decoded.get(name) != result[name]:
+                raise ValueError("RPC transaction field disagrees with raw bytes: " + name)
+        if decoded.get("hash") != wtxid:
+            raise ValueError("RPC wtxid disagrees with raw bytes")
+    return result
 
 
 def transaction_analysis(transaction, prevouts, recipient=None, ownership=None, wallet_fee=None, previous=None):

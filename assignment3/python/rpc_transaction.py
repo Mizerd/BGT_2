@@ -3,8 +3,8 @@ import json
 from pathlib import Path
 import sys
 
-from bitcoin_data import transaction_analysis
-from common import DEFAULT_EVIDENCE, RPC, load, now, save
+from bitcoin_data import transaction_analysis, transaction_metrics
+from common import DEFAULT_EVIDENCE, ROOT, RPC, load, now, save
 
 
 def main():
@@ -29,6 +29,11 @@ def main():
     result = transaction_analysis(transaction, load(args.evidence / "prevouts.json"), state["recipient"],
                                   load(args.evidence / "output-wallet-info.json"), sender["fee"],
                                   load(args.evidence / "previous-transactions.json"))
+    result["serialization"] = transaction_metrics(transaction["hex"], transaction)
+    legacy = load(ROOT / "fixtures/legacy.json")
+    result["legacy_comparison"] = transaction_metrics(legacy["raw"])
+    if result["legacy_comparison"]["txid"] != legacy["txid"]:
+        raise ValueError("Historical raw fixture does not match its recorded txid")
     if sum(output["value_sat"] for output in result["vout"] if output["role"] == "recipient") != 100000000:
         raise ValueError("The recipient did not receive exactly 1 BTC")
     result.update(observed_at=now(), source="saved RPC fixture" if args.offline else "live local Bitcoin Core RPC")
