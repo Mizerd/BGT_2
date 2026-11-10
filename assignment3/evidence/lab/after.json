@@ -1,0 +1,69 @@
+{
+  "observed_at": "2026-11-10T07:10:25.991870+00:00",
+  "mempool": [],
+  "sender": {
+    "amount": "-1.00000000",
+    "fee": "-0.00000282",
+    "confirmations": 1,
+    "blockhash": "14adc4f7befad3ee4b02a3a9730b026887f3466a8a64340bf1d27e7770e662db",
+    "blockheight": 102,
+    "blockindex": 1,
+    "blocktime": 1794294625,
+    "txid": "da3ff5265282fad130d2f9b9ed535511366626ca3214f0602d36c503046b495a",
+    "wtxid": "830ef29c2d0de224e26d614406c764c1c1e25f6d633fac1a5e54eb7561c8b8c7",
+    "alternate_wtxids": [],
+    "walletconflicts": [],
+    "mempoolconflicts": [],
+    "time": 1794294625,
+    "timereceived": 1794294625,
+    "comment": "bgt3-29a3dc50-057e-4f6b-a166-4852957fa683",
+    "details": [
+      {
+        "address": "bcrt1qtdka436qprkgm55p6hx0qda696dp2h8gu7y0c3",
+        "category": "send",
+        "amount": "-1.00000000",
+        "vout": 1,
+        "fee": "-0.00000282",
+        "abandoned": false
+      }
+    ],
+    "hex": "0200000000010196fa33c6d61735c892ce0792af0eadb91878de8796544ea88b12a790d0e9554e0000000000fdffffff02e60f10240100000016001489ad4df5c0236b89460edb52663d372b8d1106ba00e1f505000000001600145b6ddac74008ec8dd281d5ccf037ba2e9a155ce80247304402203e143f59cdd6cbec03aaa30e0ff0f7244805ee878f5bbdd9837131364f8f3256022044d480331e84c72cd95e58c1d400a4f0e31bd83110c858fd2264bb6508fc5b3a0121031f812c693b2c2d2f7e226152df22d00f59a243d0a6dbb04539b30945bb2225e549000000",
+    "lastprocessedblock": {
+      "hash": "14adc4f7befad3ee4b02a3a9730b026887f3466a8a64340bf1d27e7770e662db",
+      "height": 102
+    }
+  },
+  "receiver": {
+    "amount": "1.00000000",
+    "confirmations": 1,
+    "blockhash": "14adc4f7befad3ee4b02a3a9730b026887f3466a8a64340bf1d27e7770e662db",
+    "blockheight": 102,
+    "blockindex": 1,
+    "blocktime": 1794294625,
+    "txid": "da3ff5265282fad130d2f9b9ed535511366626ca3214f0602d36c503046b495a",
+    "wtxid": "830ef29c2d0de224e26d614406c764c1c1e25f6d633fac1a5e54eb7561c8b8c7",
+    "alternate_wtxids": [],
+    "walletconflicts": [],
+    "mempoolconflicts": [],
+    "time": 1794294625,
+    "timereceived": 1794294625,
+    "details": [
+      {
+        "address": "bcrt1qtdka436qprkgm55p6hx0qda696dp2h8gu7y0c3",
+        "parent_descs": [
+          "wpkh([d5d609f9/84h/1h/0h]tpubDCnKBHtLG1eM4WgtH8sUG4W7siVN2T3SNq3m5eAtvDVL1vn3fUAXHdwW2sFuNmmRHmNr8KStD4CiS4YtdzcFrvqqTctfGWkE4xtodnzQU96/0/*)#04r7h34j"
+        ],
+        "category": "receive",
+        "amount": "1.00000000",
+        "label": "payment",
+        "vout": 1,
+        "abandoned": false
+      }
+    ],
+    "hex": "0200000000010196fa33c6d61735c892ce0792af0eadb91878de8796544ea88b12a790d0e9554e0000000000fdffffff02e60f10240100000016001489ad4df5c0236b89460edb52663d372b8d1106ba00e1f505000000001600145b6ddac74008ec8dd281d5ccf037ba2e9a155ce80247304402203e143f59cdd6cbec03aaa30e0ff0f7244805ee878f5bbdd9837131364f8f3256022044d480331e84c72cd95e58c1d400a4f0e31bd83110c858fd2264bb6508fc5b3a0121031f812c693b2c2d2f7e226152df22d00f59a243d0a6dbb04539b30945bb2225e549000000",
+    "lastprocessedblock": {
+      "hash": "14adc4f7befad3ee4b02a3a9730b026887f3466a8a64340bf1d27e7770e662db",
+      "height": 102
+    }
+  }
+}

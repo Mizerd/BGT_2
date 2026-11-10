@@ -1,0 +1,12 @@
+{
+  "bcrt1q3xk5mawqyd4cj3swmdfxv0fh9wx3zp46fm76qp": {
+    "ismine": true,
+    "ischange": true,
+    "iswitness": true
+  },
+  "bcrt1qtdka436qprkgm55p6hx0qda696dp2h8gu7y0c3": {
+    "ismine": false,
+    "ischange": false,
+    "iswitness": true
+  }
+}

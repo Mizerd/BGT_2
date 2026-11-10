@@ -3,8 +3,13 @@
   "started_at": "2026-11-10T07:08:14.765605+00:00",
   "chain": "regtest",
   "initial_height": 0,
-  "status": "funded",
+  "status": "confirmed",
   "mining_address": "bcrt1q22rldx7x63g880htcg22lk9tnve2tzug3vc7jj",
   "recipient": "bcrt1qtdka436qprkgm55p6hx0qda696dp2h8gu7y0c3",
-  "funded_height": 101
+  "funded_height": 101,
+  "txid": "da3ff5265282fad130d2f9b9ed535511366626ca3214f0602d36c503046b495a",
+  "requested_fee_sat_vb": 2,
+  "block_hash": "14adc4f7befad3ee4b02a3a9730b026887f3466a8a64340bf1d27e7770e662db",
+  "completed_at": "2026-11-10T07:10:26.125726+00:00",
+  "block_height": 102
 }
